@@ -1,10 +1,12 @@
 import type { QteDirection } from '../../lib/types'
 
-const ARROW: Record<QteDirection, string> = {
-  up: '↑',
-  down: '↓',
-  left: '←',
-  right: '→',
+import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
+
+const ARROW: Record<QteDirection, JSX.Element> = {
+  up: <PixelArrowUp />,
+  down: <PixelArrowDown />,
+  left: <PixelArrowLeft />,
+  right: <PixelArrowRight />,
 }
 
 interface MultiplayerParticipantCombinationProps {

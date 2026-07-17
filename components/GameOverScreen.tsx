@@ -12,8 +12,8 @@ interface GameOverScreenProps {
 export default function GameOverScreen({ state, onRestart, onHome }: GameOverScreenProps) {
   return (
     <PixelCard tone="neutral" className="flex w-full max-w-md flex-col items-center gap-6">
-      <h2 className="text-3xl font-bold text-retro-text">Game Over</h2>
-      <p className="text-xl text-retro-text">
+      <h2 className="font-pixel text-3xl font-bold text-retro-text">Game Over</h2>
+      <p className="font-pixel text-xl text-retro-text">
         Final score: <span className="font-mono text-retro-green">{state.score}</span>
       </p>
       {state.failed && (

@@ -2,11 +2,13 @@ import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall } from '@pxlkit/ui'
 import type { QteDirection, SingleplayerState } from '../lib/types'
 
-const ARROW: Record<QteDirection, string> = {
-  up: '↑',
-  down: '↓',
-  left: '←',
-  right: '→',
+import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from './PixelArrows';
+
+const ARROW: Record<QteDirection, JSX.Element> = {
+  up: <PixelArrowUp />,
+  down: <PixelArrowDown />,
+  left: <PixelArrowLeft />,
+  right: <PixelArrowRight />,
 }
 
 interface GameplayWindowProps {
