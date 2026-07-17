@@ -4,6 +4,7 @@ import { endlessTimeLimit, generateSequence, keyToDirection } from '../lib/qte'
 
 const TIMER_MODE_DURATION_MS = 30_000
 const TIMER_MODE_SEQUENCE_LIMIT_MS = 5000
+const PRESTART_DURATION_MS = 9_000
 const SEQUENCE_LENGTH = 4
 
 function createInitialState(mode: GameMode): SingleplayerState {
@@ -13,7 +14,9 @@ function createInitialState(mode: GameMode): SingleplayerState {
     score: 0,
     sequence: null,
     progress: 0,
-    timeLeftMs: mode === 'timer' ? TIMER_MODE_DURATION_MS : endlessTimeLimit(0),
+    gameTimeLeftMs: TIMER_MODE_DURATION_MS,
+    sequenceTimeLeftMs: mode === 'timer' ? TIMER_MODE_SEQUENCE_LIMIT_MS : endlessTimeLimit(0),
+    prestartTimeLeftMs: PRESTART_DURATION_MS,
     failed: false,
   }
 }
@@ -30,7 +33,7 @@ export function useSingleplayerState(): UseSingleplayerState {
   )
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const deadlineRef = useRef<number>(0)
+  const lastTickRef = useRef<number>(0)
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -39,46 +42,83 @@ export function useSingleplayerState(): UseSingleplayerState {
     }
   }, [])
 
-  const nextSequence = useCallback((mode: GameMode, completed: number) => {
-    const limit =
-      mode === 'timer' ? TIMER_MODE_SEQUENCE_LIMIT_MS : endlessTimeLimit(completed)
-    setState((prev) => ({
-      ...prev,
-      sequence: generateSequence(SEQUENCE_LENGTH),
-      progress: 0,
-      failed: false,
-      timeLeftMs: limit,
-    }))
-    deadlineRef.current = Date.now() + limit
-  }, [])
-
-  const endGame = useCallback(() => {
-    clearTimer()
-    setState((prev) => ({ ...prev, phase: 'gameover', sequence: null }))
-  }, [clearTimer])
-
   const start = useCallback(
     (mode: GameMode) => {
       clearTimer()
-      setState(createInitialState(mode))
-      setState((prev) => ({ ...prev, phase: 'playing' }))
-      nextSequence(mode, 0)
-      deadlineRef.current = Date.now() + (mode === 'timer' ? TIMER_MODE_DURATION_MS : endlessTimeLimit(0))
+      setState({
+        phase: 'prestart',
+        mode,
+        score: 0,
+        sequence: generateSequence(SEQUENCE_LENGTH),
+        progress: 0,
+        gameTimeLeftMs: TIMER_MODE_DURATION_MS,
+        sequenceTimeLeftMs: endlessTimeLimit(0),
+        prestartTimeLeftMs: PRESTART_DURATION_MS,
+        failed: false,
+      })
+
+      lastTickRef.current = Date.now()
       timerRef.current = setInterval(() => {
-        const remaining = deadlineRef.current - Date.now()
-        if (remaining <= 0) {
-          if (mode === 'timer') {
-            endGame()
-          } else {
-            // Endless: failing the timer eliminates the player.
-            endGame()
+        const now = Date.now()
+        const delta = now - lastTickRef.current
+        lastTickRef.current = now
+
+        setState((prev) => {
+          if (prev.phase === 'prestart') {
+            const nextPrestart = Math.max(0, prev.prestartTimeLeftMs - delta)
+            if (nextPrestart <= 0) {
+              return {
+                ...prev,
+                phase: 'playing',
+                prestartTimeLeftMs: 0,
+              }
+            }
+            return {
+              ...prev,
+              prestartTimeLeftMs: nextPrestart,
+            }
           }
-          return
-        }
-        setState((prev) => ({ ...prev, timeLeftMs: remaining }))
-      }, 100)
+
+          if (prev.phase === 'playing') {
+            if (prev.mode === 'timer') {
+              const nextGameTime = Math.max(0, prev.gameTimeLeftMs - delta)
+              if (nextGameTime <= 0) {
+                clearTimer()
+                return {
+                  ...prev,
+                  phase: 'gameover',
+                  sequence: null,
+                  gameTimeLeftMs: 0,
+                }
+              }
+              return {
+                ...prev,
+                gameTimeLeftMs: nextGameTime,
+              }
+            } else {
+              // Endless mode uses sequence timer
+              const nextSeqTime = Math.max(0, prev.sequenceTimeLeftMs - delta)
+              if (nextSeqTime <= 0) {
+                clearTimer()
+                return {
+                  ...prev,
+                  phase: 'gameover',
+                  sequence: null,
+                  sequenceTimeLeftMs: 0,
+                }
+              }
+              return {
+                ...prev,
+                sequenceTimeLeftMs: nextSeqTime,
+              }
+            }
+          }
+
+          return prev
+        })
+      }, 50)
     },
-    [clearTimer, endGame, nextSequence],
+    [clearTimer],
   )
 
   const reset = useCallback(() => {
@@ -94,25 +134,35 @@ export function useSingleplayerState(): UseSingleplayerState {
         if (direction !== expected) {
           if (prev.mode === 'endless') {
             clearTimer()
-            return { ...prev, phase: 'gameover', failed: true, sequence: null }
+            return {
+              ...prev,
+              phase: 'gameover',
+              failed: true,
+              sequence: null,
+              sequenceTimeLeftMs: 0,
+            }
           }
-          // Timer mode: a wrong input just resets the current sequence.
+          // Timer mode: a wrong input just resets the current sequence progress.
           return { ...prev, failed: true, progress: 0 }
         }
         const nextProgress = prev.progress + 1
         if (nextProgress >= prev.sequence.steps.length) {
           const newScore = prev.score + 1
-          if (prev.mode === 'timer') {
-            nextSequence('timer', newScore)
-          } else {
-            nextSequence('endless', newScore)
+          // Generate next sequence
+          const nextLimit = prev.mode === 'endless' ? endlessTimeLimit(newScore) : prev.sequenceTimeLeftMs
+          return {
+            ...prev,
+            score: newScore,
+            sequence: generateSequence(SEQUENCE_LENGTH),
+            progress: 0,
+            failed: false,
+            sequenceTimeLeftMs: nextLimit,
           }
-          return { ...prev, score: newScore }
         }
         return { ...prev, progress: nextProgress, failed: false }
       })
     },
-    [clearTimer, nextSequence],
+    [clearTimer],
   )
 
   useEffect(() => {

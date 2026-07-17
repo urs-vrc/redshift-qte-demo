@@ -18,18 +18,6 @@ const VARIANT_OPTIONS = [
   { value: 'reaction', label: 'Timer (Reaction)' },
 ]
 
-const VARIANT_LABEL: Record<MultiplayerVariant, string> = {
-  score: 'NORMAL',
-  elimination: 'HARD',
-  reaction: 'HARD',
-}
-
-const VARIANT_MODE: Record<MultiplayerVariant, string> = {
-  score: 'TIMER',
-  elimination: 'ENDLESS',
-  reaction: 'REACTION',
-}
-
 const VARIANT_HINT: Record<MultiplayerVariant, string> = {
   score: 'Timer mode rewards consistency under pressure.',
   elimination: 'Endless mode decreases the time between codes!',
@@ -64,46 +52,34 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      <div className="rounded-full border-2 border-black bg-[#d9d9d9] px-5 py-1 text-lg text-black">
-        00:09.0
-      </div>
+    <div className="flex w-full flex-col items-center gap-6 px-4 py-8">
+      <h1 className="font-pixel text-center text-2xl text-retro-text md:text-3xl">
+        Multiplayer Lobby
+      </h1>
 
-      <PixelCard tone="neutral" className="w-full max-w-2xl border-2 border-black bg-[#d9d9d9]">
-        <div className="flex flex-col items-center gap-4">
-          <p className="font-['Bitcount_Grid_Single',monospace] text-3xl tracking-wide text-black">GET READY</p>
+      <PixelCard tone="neutral" className="w-full max-w-xl">
+        <div className="flex flex-col gap-6">
+          <p className="text-center text-sm text-retro-muted">
+            Configure your runner profile and join or host a multiplayer session.
+          </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <span className="rounded-full border-2 border-black bg-[#d9d9d9] px-4 py-1 text-lg text-black">
-              {VARIANT_LABEL[variant]}
-            </span>
-            <span className="rounded-full border-2 border-black bg-[#d9d9d9] px-4 py-1 text-lg text-black">
-              {VARIANT_MODE[variant]}
-            </span>
-            <span className="rounded-full border-2 border-black bg-[#d9d9d9] px-4 py-1 text-lg text-black">
-              12 PLAYERS
-            </span>
-          </div>
-
-          <div className="w-full max-w-md">
+          <div className="flex flex-col gap-4">
             <PixelInput
               label="Display name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Runner"
+              placeholder="Enter runner name..."
             />
-          </div>
 
-          <div className="w-full max-w-md">
             <PixelSelect
-              label="Variant"
+              label="Game Variant"
               options={VARIANT_OPTIONS}
               value={variant}
               onChange={(v) => setVariant(v as MultiplayerVariant)}
             />
           </div>
 
-          <div className="flex w-full max-w-md gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <PixelButton
               tone="green"
               className="flex-1"
@@ -112,24 +88,27 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
             >
               Create Lobby
             </PixelButton>
-            <PixelInput
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="CODE"
-              maxLength={6}
-              className="flex-1"
-            />
-            <PixelButton
-              tone="neutral"
-              variant="outline"
-              disabled={!name || !code}
-              onClick={() => onJoin(code, name)}
-            >
-              Join
-            </PixelButton>
+
+            <div className="flex flex-1 gap-2">
+              <PixelInput
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="CODE"
+                maxLength={6}
+                className="w-24 flex-none text-center font-mono"
+              />
+              <PixelButton
+                tone="cyan"
+                className="flex-1"
+                disabled={!name || !code}
+                onClick={() => onJoin(code, name)}
+              >
+                Join
+              </PixelButton>
+            </div>
           </div>
 
-          <div className="mt-2 w-full max-w-md flex justify-center">
+          <div className="border-t border-retro-border/40 pt-4 flex justify-center">
             <PixelButton
               tone="neutral"
               variant="ghost"
@@ -142,7 +121,7 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
         </div>
       </PixelCard>
 
-      <div className="w-full max-w-2xl rounded-full border-2 border-black bg-[#d9d9d9] px-4 py-1 text-center text-sm text-black">
+      <div className="w-full max-w-xl text-center text-xs text-retro-muted">
         {VARIANT_HINT[variant]}
       </div>
     </div>

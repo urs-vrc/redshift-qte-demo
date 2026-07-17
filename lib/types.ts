@@ -2,7 +2,7 @@ export type GameMode = 'timer' | 'endless'
 
 export type MultiplayerVariant = 'score' | 'elimination' | 'reaction'
 
-export type GamePhase = 'idle' | 'playing' | 'gameover'
+export type GamePhase = 'idle' | 'prestart' | 'playing' | 'gameover'
 
 export type QteDirection = 'up' | 'down' | 'left' | 'right'
 
@@ -18,8 +18,12 @@ export interface SingleplayerState {
   sequence: QteSequence | null
   /** Index of the next step the player must input. */
   progress: number
-  /** Remaining time in milliseconds for the current sequence / round. */
-  timeLeftMs: number
+  /** Remaining time in milliseconds for the global match (Timer Mode: starts at 30s). */
+  gameTimeLeftMs: number
+  /** Remaining time in milliseconds for the current sequence. */
+  sequenceTimeLeftMs: number
+  /** Remaining time in milliseconds for the prestart countdown (starts at 9s). */
+  prestartTimeLeftMs: number
   /** Whether the most recent input was wrong. */
   failed: boolean
 }

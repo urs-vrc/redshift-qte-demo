@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
-  GamePhase,
   Lobby,
   MultiplayerParticipant,
   MultiplayerVariant,
@@ -120,8 +119,13 @@ export function useMultiplayerState(): UseMultiplayerState {
 
   const startGame = useCallback(() => {
     setLobby((prev) =>
-      prev ? { ...prev, phase: 'playing' as GamePhase } : prev,
+      prev ? { ...prev, phase: 'prestart' } : prev,
     )
+    setTimeout(() => {
+      setLobby((prev) =>
+        prev && prev.phase === 'prestart' ? { ...prev, phase: 'playing' } : prev,
+      )
+    }, 9000)
   }, [])
 
   useEffect(() => teardown, [teardown])
