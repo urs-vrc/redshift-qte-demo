@@ -64,11 +64,13 @@ export default function Home() {
   if (screen === 'single') {
     if (single.state.phase === 'gameover') {
       return (
-        <GameOverScreen
-          state={single.state}
-          onRestart={() => single.start(mode, Number(lobbyWindowSeconds))}
-          onHome={() => setScreen('menu')}
-        />
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-retro-bg">
+          <GameOverScreen
+            state={single.state}
+            onRestart={() => single.start(mode, Number(lobbyWindowSeconds))}
+            onHome={() => setScreen('menu')}
+          />
+        </div>
       )
     }
     if (single.state.phase === 'prestart') {
@@ -99,13 +101,15 @@ export default function Home() {
   if (screen === 'multi') {
     if (multi.lobby && multi.lobby.phase === 'gameover') {
       return (
-        <ResultsLeaderboard
-          participants={multi.lobby.participants}
-          onHome={() => {
-            multi.leaveLobby()
-            setScreen('menu')
-          }}
-        />
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-retro-bg">
+          <ResultsLeaderboard
+            participants={multi.lobby.participants}
+            onHome={() => {
+              multi.leaveLobby()
+              setScreen('menu')
+            }}
+          />
+        </div>
       )
     }
     if (multi.lobby && multi.lobby.phase === 'prestart') {
