@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { PixelAvatar, PixelBadge, PixelCard } from '@pxlkit/ui-kit'
+import { PixelAvatar, PixelBadge, PixelCard, PixelButton } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
-import { Clock, SparkleSmall } from '@pxlkit/ui'
+import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
 import type { Lobby, MultiplayerParticipant, QteDirection } from '../../lib/types'
 import { keyToDirection, generateSequence } from '../../lib/qte'
 
@@ -192,14 +192,14 @@ export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGamep
             ))}
           </div>
           <div className="mt-4 rounded-md bg-[#747272] p-3 flex flex-col gap-2 text-center text-sm text-white">
-            <span className="font-bold">Live Multiplayer Feed</span>
-            <button
-              type="button"
+            <PixelButton
+              tone="neutral"
+              variant="outline"
+              size="sm"
               onClick={onLeave}
-              className="mt-1 w-full rounded border border-white bg-transparent px-3 py-1.5 text-xs font-semibold text-white hover:bg-white hover:text-[#747272] transition"
             >
               Leave Session
-            </button>
+            </PixelButton>
           </div>
         </aside>
 
@@ -239,13 +239,14 @@ export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGamep
             {formatTime(timeLeftMs)}
           </div>
 
-          <button
-            type="button"
+          <PixelButton
+            tone="neutral"
+            variant="ghost"
+            iconLeft={<PxlKitIcon icon={HomeIcon} size={16} />}
             onClick={onLeave}
-            className="rounded-full border-2 border-black bg-[#d9d9d9] px-5 py-1 text-sm text-black hover:bg-[#e4e4e4]"
           >
             Back to Solo Mode
-          </button>
+          </PixelButton>
 
           <div className="flex items-center gap-2 text-sm text-black/70">
             <PxlKitIcon icon={SparkleSmall} size={14} />
