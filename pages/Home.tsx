@@ -78,6 +78,7 @@ export default function Home() {
         <CountdownScreen
           timeLeftMs={single.state.prestartTimeLeftMs}
           mode={mode}
+          timerSeconds={Number(lobbyWindowSeconds)}
           onQuit={() => setScreen('menu')}
         />
       )
@@ -123,6 +124,7 @@ export default function Home() {
                 ? 'elimination'
                 : 'reaction'
           }
+          timerSeconds={Number(lobbyWindowSeconds)}
           playersCount={multi.lobby.participants.length}
           onQuit={() => {
             multi.leaveLobby()

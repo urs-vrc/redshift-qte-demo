@@ -8,24 +8,28 @@ interface CountdownScreenProps {
   mode: GameMode | MultiplayerVariant
   playersCount?: number
   onQuit: () => void
+  timerSeconds?: number
 }
 
-function getModeInfo(mode: GameMode | MultiplayerVariant): {
-  difficulty: 'HARD' | 'NORMAL'
+function getModeInfo(mode: GameMode | MultiplayerVariant, timerSeconds?: number): {
+  difficulty: 'HARD' | 'NORMAL' | 'EASY'
   variant: string
   hint: string
 } {
   switch (mode) {
     case 'timer':
     case 'score':
+      let difficulty: 'HARD' | 'NORMAL' | 'EASY' = 'NORMAL'
+      if (timerSeconds === 5) difficulty = 'HARD'
+      else if (timerSeconds === 15) difficulty = 'EASY'
       return {
-        difficulty: 'NORMAL',
+        difficulty,
         variant: 'TIMER',
         hint: 'Score as high as you can before the timer runs out!',
       }
     case 'endless':
       return {
-        difficulty: 'ENDLESS',
+        difficulty: 'HARD',
         variant: 'ENDLESS',
         hint: 'Endless mode decreases the time between codes!',
       }
@@ -43,8 +47,9 @@ export default function CountdownScreen({
   mode,
   playersCount,
   onQuit,
+  timerSeconds,
 }: CountdownScreenProps) {
-  const { difficulty, variant, hint } = getModeInfo(mode)
+  const { difficulty, variant, hint } = getModeInfo(mode, timerSeconds)
 
   const formatTime = (ms: number) => {
     const totalSecs = ms / 1000
