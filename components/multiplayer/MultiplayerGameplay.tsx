@@ -192,7 +192,6 @@ export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGamep
             ))}
           </div>
           <div className="mt-4 rounded-md bg-[#747272] p-3 flex flex-col gap-2 text-center text-sm text-white">
-            <span className="font-bold">Live Multiplayer Feed</span>
             <PixelButton
               tone="neutral"
               variant="outline"
