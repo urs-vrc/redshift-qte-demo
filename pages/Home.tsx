@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge } from '@pxlkit/ui-kit'
+import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge, PixelAlert } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
 import type { GameMode, MultiplayerParticipant } from '../lib/types'
@@ -300,21 +300,27 @@ export default function Home() {
       </div>
 
       {/* Options card — rounded rect matching the mockup */}
-      <div className="w-full max-w-md rounded-2xl border-2 border-retro-border bg-retro-surface p-6">
-        <div className="flex flex-col items-center gap-5">
-          <PixelSegmented
-            value={mode}
-            options={MODE_OPTIONS}
-            onChange={(v) => setMode(v as GameMode)}
-          />
-          {mode !== 'endless' && (
+      {menuTab === 'multi' ? (
+        <PixelAlert
+          tone="neutral"
+          label="Coming soon"
+          message="Multiplayer mode is coming soon! stay tuned"
+        />
+      ) : (
+        <div className="w-full max-w-md rounded-2xl border-2 border-retro-border bg-retro-surface p-6">
+          <div className="flex flex-col items-center gap-5">
             <PixelSegmented
-              value={lobbyWindowSeconds}
-              options={WINDOW_OPTIONS}
-              onChange={setLobbyWindowSeconds}
+              value={mode}
+              options={MODE_OPTIONS}
+              onChange={(v) => setMode(v as GameMode)}
             />
-          )}
-          {menuTab === 'solo' ? (
+            {mode !== 'endless' && (
+              <PixelSegmented
+                value={lobbyWindowSeconds}
+                options={WINDOW_OPTIONS}
+                onChange={setLobbyWindowSeconds}
+              />
+            )}
             <PixelButton
               id="btn-start"
               tone="neutral"
@@ -328,20 +334,9 @@ export default function Home() {
             >
               START
             </PixelButton>
-          ) : (
-            <PixelButton
-              id="btn-multiplayer"
-              tone="neutral"
-              size="lg"
-              iconLeft={<PxlKitIcon icon={Clock} size={16} />}
-              className="w-full"
-              onClick={() => setScreen('multi')}
-            >
-              FIND LOBBY
-            </PixelButton>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
