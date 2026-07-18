@@ -1,2 +1,21 @@
 /* Theme + design tokens are provided by @pxlkit/ui-kit/styles.css (imported in main.tsx).
    This file is reserved for app-specific custom CSS layered on top of the kit. */
+
+/* Warm, eye-friendly tint across the whole app (Anthropic-inspired amber).
+   A fixed, non-interactive overlay that multiplies a warm color over everything,
+   cutting blue light so the UI is gentler on the eyes. Tweak --warm-tint-alpha
+   to make the effect stronger or weaker. */
+:root {
+  --warm-tint: 255, 168, 76; /* amber/orange, rgb channels */
+  --warm-tint-alpha: 0.10;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483647;
+  background: rgba(var(--warm-tint), var(--warm-tint-alpha));
+  mix-blend-mode: multiply;
+}
