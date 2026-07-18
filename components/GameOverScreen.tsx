@@ -1,4 +1,4 @@
-import { PixelCard, PixelButton, PixelBadge } from '@pxlkit/ui-kit'
+import { PixelCard, PixelButton } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Play, Home } from '@pxlkit/ui'
 import type { SingleplayerState } from '../lib/types'
