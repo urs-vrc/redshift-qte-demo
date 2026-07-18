@@ -41,12 +41,12 @@ export default function GameplayWindow({ state }: GameplayWindowProps) {
       <div className="w-full max-w-lg rounded-2xl border-2 border-retro-border bg-retro-surface p-6">
         <div className="flex flex-col items-center gap-4">
           {/* QTE Arrow Steps */}
-          <div className="flex justify-center gap-2">
+          <div className="flex w-full flex-wrap justify-center gap-2 px-2">
             {sequence?.steps.map((step, i) => (
               <span
                 key={i}
                 className={[
-                  'flex h-14 w-14 items-center justify-center rounded-lg border-2 font-pixel text-2xl transition-colors',
+                  'flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border-2 font-pixel text-2xl transition-colors',
                   i < progress
                     ? 'border-retro-border/40 bg-retro-bg/40 text-retro-muted/40'
                     : i === progress

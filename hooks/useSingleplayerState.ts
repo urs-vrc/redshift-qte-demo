@@ -23,7 +23,7 @@ function createInitialState(mode: GameMode, limitSeconds: number = 5): Singlepla
 
 export interface UseSingleplayerState {
   state: SingleplayerState
-  start: (mode: GameMode, limitSeconds: number) => void
+  start: (mode: GameMode, limitSeconds: number, sequenceLength?: number) => void
   reset: () => void
   telemetry: ReturnType<typeof useTelemetry>['telemetry']
 }
@@ -46,11 +46,13 @@ export function useSingleplayerState(): UseSingleplayerState {
   }, [])
 
   const start = useCallback(
-    (mode: GameMode, limitSeconds: number) => {
+    (mode: GameMode, limitSeconds: number, sequenceLength?: number) => {
       clearTimer()
       telemetry.start()
       const initialLength =
-        mode === 'endless' ? endlessSequenceLength(0, SEQUENCE_LENGTH) : SEQUENCE_LENGTH
+        mode === 'endless'
+          ? endlessSequenceLength(0, SEQUENCE_LENGTH)
+          : sequenceLength ?? SEQUENCE_LENGTH
       telemetry.setSequenceLength(initialLength)
       setState({
         phase: 'prestart',

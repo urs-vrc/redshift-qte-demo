@@ -26,6 +26,12 @@ const WINDOW_OPTIONS = [
   { value: '15', label: '15s' },
 ]
 
+const LENGTH_OPTIONS = [
+  { value: '4', label: '4-combo' },
+  { value: '6', label: '6-combo' },
+  { value: '8', label: '8-combo' },
+]
+
 const DEMO_NAME_POOL = [
   'Nice Nature',
   'Nova Rust',
@@ -40,6 +46,7 @@ export default function Home() {
   const [menuTab, setMenuTab] = useState<MenuTab>('solo')
   const [mode, setMode] = useState<GameMode>('timer')
   const [lobbyWindowSeconds, setLobbyWindowSeconds] = useState('5')
+  const [sequenceLength, setSequenceLength] = useState('4')
 
   const single = useSingleplayerState()
   const multi = useMultiplayerState()
@@ -68,7 +75,7 @@ export default function Home() {
           <GameOverScreen
             state={single.state}
             telemetry={single.telemetry}
-            onRestart={() => single.start(mode, Number(lobbyWindowSeconds))}
+            onRestart={() => single.start(mode, Number(lobbyWindowSeconds), Number(sequenceLength))}
             onHome={() => setScreen('menu')}
           />
         </div>
@@ -321,6 +328,13 @@ export default function Home() {
                 onChange={setLobbyWindowSeconds}
               />
             )}
+            {mode !== 'endless' && (
+              <PixelSegmented
+                value={sequenceLength}
+                options={LENGTH_OPTIONS}
+                onChange={setSequenceLength}
+              />
+            )}
             <PixelButton
               id="btn-start"
               tone="neutral"
@@ -329,7 +343,7 @@ export default function Home() {
               className="w-full"
               onClick={() => {
                 setScreen('single')
-                single.start(mode, Number(lobbyWindowSeconds))
+                single.start(mode, Number(lobbyWindowSeconds), Number(sequenceLength))
               }}
             >
               START
