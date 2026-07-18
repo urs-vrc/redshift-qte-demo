@@ -31,6 +31,7 @@ export interface UseSingleplayerState {
   state: SingleplayerState
   start: (mode: GameMode, limitSeconds: number, sequenceLength?: number) => void
   reset: () => void
+  handleInput: (direction: QteDirection) => void
   telemetry: ReturnType<typeof useTelemetry>['telemetry']
 }
 
@@ -197,5 +198,5 @@ export function useSingleplayerState(): UseSingleplayerState {
 
   useEffect(() => clearTimer, [clearTimer])
 
-  return { state, start, reset, telemetry: telemetry.telemetry }
+  return { state, start, reset, handleInput, telemetry: telemetry.telemetry }
 }

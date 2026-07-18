@@ -4,6 +4,7 @@ import type { ReactElement } from 'react'
 import type { QteDirection, SingleplayerState } from '../lib/types'
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from './PixelArrows';
+import Dpad from './Dpad';
 
 const ARROW: Record<QteDirection, ReactElement> = {
   up: <PixelArrowUp />,
@@ -14,9 +15,10 @@ const ARROW: Record<QteDirection, ReactElement> = {
 
 interface GameplayWindowProps {
   state: SingleplayerState
+  onInput: (direction: QteDirection) => void
 }
 
-export default function GameplayWindow({ state }: GameplayWindowProps) {
+export default function GameplayWindow({ state, onInput }: GameplayWindowProps) {
   const { sequence, progress, mode, score, limitSeconds, timeLeftMs } = state
 
   const pct =
@@ -83,6 +85,9 @@ export default function GameplayWindow({ state }: GameplayWindowProps) {
           ? formatTime(timeLeftMs)
           : formatTime(timeLeftMs)}
       </div>
+
+      {/* On-screen D-pad — only shown on touch devices, below the timer */}
+      <Dpad onInput={onInput} disabled={state.phase !== 'playing'} />
     </div>
   )
 }

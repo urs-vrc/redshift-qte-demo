@@ -21,6 +21,7 @@ interface MultiplayerGameplayProps {
 }
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
+import Dpad from '../Dpad';
 
 const ARROW: Record<QteDirection, ReactElement> = {
   up: <PixelArrowUp />,
@@ -332,6 +333,9 @@ export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGamep
           <PxlKitIcon icon={Clock} size={14} />
           {formatTime(timeLeftMs)}
         </div>
+
+        {/* On-screen D-pad — only shown on touch devices, below the timer */}
+        <Dpad onInput={handleInput} disabled={!localParticipant.alive} />
 
         {/* Live telemetry HUD */}
         <TelemetryStats telemetry={telemetry.telemetry} title="Your Telemetry" className="max-w-lg" />

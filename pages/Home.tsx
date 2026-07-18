@@ -93,7 +93,7 @@ export default function Home() {
     }
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-8 bg-retro-bg">
-        <GameplayWindow state={single.state} />
+        <GameplayWindow state={single.state} onInput={single.handleInput} />
         <PixelButton
           tone="neutral"
           variant="ghost"
