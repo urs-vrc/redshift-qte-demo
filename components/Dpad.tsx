@@ -39,7 +39,7 @@ export default function Dpad({ onInput, disabled = false }: DpadProps) {
     <div
       role="group"
       aria-label="Directional pad"
-      className="grid select-none grid-cols-3 grid-rows-3 gap-1 w-[204px] min-[resolution:2dppx]:w-[240px]"
+      className="grid select-none grid-cols-3 grid-rows-3 gap-1 w-[204px] [min-resolution:2dppx]:w-[240px]"
       style={{ touchAction: 'none' }}
     >
       {BUTTONS.map(({ direction, icon, area, label }) => (
@@ -53,7 +53,7 @@ export default function Dpad({ onInput, disabled = false }: DpadProps) {
             if (!disabled) onInput(direction)
           }}
           onContextMenu={(e) => e.preventDefault()}
-          className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-retro-border bg-retro-surface font-pixel text-3xl text-retro-text transition-transform active:scale-95 active:bg-retro-bg disabled:opacity-40 min-[resolution:2dppx]:h-[72px] min-[resolution:2dppx]:w-[72px] min-[resolution:2dppx]:text-4xl"
+          className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-retro-border bg-retro-surface font-pixel text-3xl text-retro-text transition-transform active:scale-95 active:bg-retro-bg disabled:opacity-40 [min-resolution:2dppx]:h-[72px] [min-resolution:2dppx]:w-[72px] [min-resolution:2dppx]:text-4xl"
           style={{ gridArea: area }}
         >
           {icon}
