@@ -200,6 +200,7 @@ export default function Home() {
           lobby={multi.lobby}
           localParticipantId={multi.localParticipantId}
           trackLocal={multi.trackLocal}
+          endRound={multi.endRound}
           onLeave={() => {
             multi.leaveLobby()
             setScreen('menu')

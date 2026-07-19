@@ -21,6 +21,7 @@ interface MultiplayerGameplayProps {
   localParticipantId: string | null
   onLeave: () => void
   trackLocal: (participant: MultiplayerParticipant) => void
+  endRound: () => void
 }
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
@@ -92,7 +93,7 @@ function ParticipantRow({ participant }: { participant: MultiplayerParticipant }
   )
 }
 
-export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave, trackLocal }: MultiplayerGameplayProps) {
+export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave, trackLocal, endRound }: MultiplayerGameplayProps) {
   const [localParticipant, setLocalParticipant] = useState<MultiplayerParticipant>(() => {
     const orig =
       lobby.participants.find((p) => p.id === localParticipantId) ??
@@ -171,12 +172,13 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
           setEliminated(true)
           setLocalParticipant((prev) => ({ ...prev, alive: false }))
           trackLocal({ ...localParticipantRef.current, alive: false })
-          telemetry.stop()
-          clearInterval(interval)
-        } else {
-          telemetry.stop()
-          clearInterval(interval)
         }
+        telemetry.stop()
+        clearInterval(interval)
+        // The local clock ending ends the round. Only the host actually
+        // persists standings + broadcasts gameover; non-hosts are no-ops and
+        // will receive the gameover phase via Realtime.
+        endRound()
       }
       setTimeLeftMs(next)
     }, 100)
@@ -184,7 +186,7 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
       telemetry.stop()
       clearInterval(interval)
     }
-  }, [lobby.phase, lobby.variant, lobby.startedAt, telemetry, trackLocal, localParticipantRef])
+  }, [lobby.phase, lobby.variant, lobby.startedAt, telemetry, trackLocal, localParticipantRef, endRound])
 
   const handleInput = useCallback(
     (direction: QteDirection) => {

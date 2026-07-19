@@ -25,6 +25,8 @@ export interface UseMultiplayerState {
   submitResults: () => Promise<void>
   /** Broadcast the local participant's latest state to the lobby via presence. */
   trackLocal: (participant: MultiplayerParticipant) => void
+  /** End the current round: host persists standings + broadcasts gameover. */
+  endRound: () => Promise<void>
 }
 
 function emptyLobby(code: string, hostName: string, variant: MultiplayerVariant, hostId: string): Lobby {
@@ -299,6 +301,15 @@ export function useMultiplayerState(): UseMultiplayerState {
     [isMultiplayerEnabled, supabase],
   )
 
+  // End the round. Only the host persists standings and broadcasts gameover;
+  // non-hosts simply stop (they'll receive the gameover phase via Realtime).
+  const endRound = useCallback(async () => {
+    if (!lobby) return
+    if (isHost) {
+      await submitResults()
+    }
+  }, [lobby, isHost, submitResults])
+
   // Multiplayer is enabled only when a real Supabase backend is configured.
   // Set VITE_MOCK_MODE=true to force-enable the UI without a backend (mock data).
   const isMockMode = import.meta.env.VITE_MOCK_MODE === 'true'
@@ -315,5 +326,6 @@ export function useMultiplayerState(): UseMultiplayerState {
     updateVariant,
     submitResults,
     trackLocal,
+    endRound,
   }
 }
