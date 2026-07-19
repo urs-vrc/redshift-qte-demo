@@ -45,17 +45,31 @@ function GameOverLeaderboard({
   variant,
   telemetry,
   onHome,
+  onBackToLobby,
+  backToLobbyLabel,
+  backToLobbyDisabled,
 }: {
   code: string
   participants: import('../lib/game-engine').MultiplayerParticipant[]
   variant?: import('../lib/game-engine').MultiplayerVariant
   telemetry: import('../lib/telemetry').Telemetry | null
   onHome: () => void
+  onBackToLobby?: () => void
+  backToLobbyLabel?: string
+  backToLobbyDisabled?: boolean
 }) {
   const { rows } = useLeaderboard(code, participants)
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 bg-retro-bg">
-      <ResultsLeaderboard participants={rows} variant={variant} telemetry={telemetry} onHome={onHome} />
+      <ResultsLeaderboard
+        participants={rows}
+        variant={variant}
+        telemetry={telemetry}
+        onHome={onHome}
+        onBackToLobby={onBackToLobby}
+        backToLobbyLabel={backToLobbyLabel}
+        backToLobbyDisabled={backToLobbyDisabled}
+      />
     </div>
   )
 }
@@ -177,6 +191,12 @@ export default function Home() {
             setMultiTelemetry(null)
             setScreen('menu')
           }}
+          onBackToLobby={() => {
+            setMultiTelemetry(null)
+            multi.returnToLobby()
+          }}
+          backToLobbyLabel={multi.isHost ? 'Back to Lobby' : 'Waiting for Host…'}
+          backToLobbyDisabled={!multi.isHost}
         />
       )
     }

@@ -36,6 +36,10 @@ export interface UseMultiplayerState {
   readyUp: () => void
   /** End the current round: host persists standings + broadcasts gameover. */
   endRound: () => Promise<void>
+  /** Return the lobby to the pre-game 'idle' phase so players can re-ready and
+   *  start another round without leaving. Host-only in real mode (broadcasts
+   *  via changeMode); local state flip in mock mode. */
+  returnToLobby: () => void
 }
 
 function emptyLobby(
@@ -369,6 +373,21 @@ export function useMultiplayerState(): UseMultiplayerState {
     }
   }, [lobby, isHost])
 
+  const returnToLobby = useCallback(() => {
+    if (!lobby) return
+    if (!isMultiplayerEnabled || !supabase) {
+      // Mock mode (no backend): flip local phase directly.
+      setLobby((prev) => (prev ? { ...prev, phase: 'idle' } : prev))
+      return
+    }
+    if (!isHost) return
+    // Host broadcasts the return-to-lobby so every client leaves the results
+    // screen and returns to the lobby together.
+    void supabase.functions.invoke('changeMode', {
+      body: { code: lobby.code, hostId: hostIdRef.current, phase: 'idle' },
+    })
+  }, [lobby, isHost, isMultiplayerEnabled, supabase])
+
   const leaveLobby = useCallback(() => {
     // Host persists results + broadcasts gameover before tearing down.
     if (isHost && lobby && isMultiplayerEnabled && supabase) {
@@ -548,5 +567,6 @@ export function useMultiplayerState(): UseMultiplayerState {
     trackLocal,
     readyUp,
     endRound,
+    returnToLobby,
   }
 }

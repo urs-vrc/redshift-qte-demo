@@ -9,6 +9,11 @@ import TelemetryChart from './TelemetryChart'
 interface ResultsLeaderboardProps {
   participants: MultiplayerParticipant[]
   onHome: () => void
+  /** Return to the lobby (instead of leaving) so players can start a new round. */
+  onBackToLobby?: () => void
+  /** Label for the lobby button; disabled when false. */
+  backToLobbyLabel?: string
+  backToLobbyDisabled?: boolean
   /** Local player's telemetry for the match; shown below the standings. */
   telemetry?: Telemetry | null
   /** When 'elimination', the Status (alive/eliminated) column is shown. For
@@ -16,7 +21,15 @@ interface ResultsLeaderboardProps {
   variant?: 'score' | 'elimination' | 'reaction'
 }
 
-export default function ResultsLeaderboard({ participants, onHome, telemetry, variant }: ResultsLeaderboardProps) {
+export default function ResultsLeaderboard({
+  participants,
+  onHome,
+  onBackToLobby,
+  backToLobbyLabel = 'Back to Lobby',
+  backToLobbyDisabled = false,
+  telemetry,
+  variant,
+}: ResultsLeaderboardProps) {
   const ranked = [...participants]
     .sort((a, b) => b.score - a.score)
     .map((p, i) => ({ ...p, rank: i + 1 }))
@@ -53,7 +66,17 @@ export default function ResultsLeaderboard({ participants, onHome, telemetry, va
             },
           ]}
         />
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end gap-2">
+          {onBackToLobby && (
+            <PixelButton
+              tone="green"
+              variant="solid"
+              disabled={backToLobbyDisabled}
+              onClick={onBackToLobby}
+            >
+              {backToLobbyLabel}
+            </PixelButton>
+          )}
           <PixelButton
             tone="neutral"
             variant="outline"
