@@ -17,11 +17,26 @@ Make sure to set the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environmen
 
 ### Performing Migrations on Supabase
 
-As we will need the tables setup for the multiplayer mode, you will need to perform migrations on your Supabase project. You can do this by running the following command:
+The multiplayer mode needs database tables for lobbies and participants. These are defined as versioned SQL migrations under `supabase/migrations/` and applied with the Supabase CLI.
+
+**Local development** (spins up a local Supabase stack and applies all migrations):
 
 ```bash
+npx supabase start
+npx supabase db reset   # re-applies migrations from scratch
+```
+
+**Remote project** (push migrations to your hosted Supabase project):
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
+
+Convenience npm scripts are also available: `npm run supabase:start`, `npm run supabase:stop`, `npm run supabase:reset`, and `npm run supabase:push`.
+
+> Note: the current multiplayer flow uses Realtime presence channels, so the lobby tables are optional infrastructure for persisted lobbies. They are safe to apply regardless.
 
 ## What does this demo include?
 
