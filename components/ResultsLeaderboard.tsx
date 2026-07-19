@@ -2,7 +2,7 @@ import { PixelCard, PixelTable, PixelButton, PixelBadge } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Home } from '@pxlkit/ui'
 import type { MultiplayerParticipant } from '../lib/types'
-import type { Telemetry } from '../lib/telemetry/telemetry'
+import type { Telemetry } from '../lib/telemetry'
 import TelemetryStats from './TelemetryStats'
 import TelemetryChart from './TelemetryChart'
 

@@ -21,6 +21,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "pages", "vite.config.ts"],
+  "include": ["src", "pages", "vite.config.ts", "lib"],
   "exclude": ["supabase", "node_modules", "dist"]
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { telemetryClient } from '../lib/telemetry/telemetryClient'
-import { createEmptyTelemetry } from '../lib/telemetry/telemetry'
-import type { Telemetry } from '../lib/telemetry/telemetry'
+import { createEmptyTelemetry } from '../lib/telemetry'
+import type { Telemetry } from '../lib/telemetry'
 
 export interface UseTelemetry {
   /** Current telemetry snapshot. */

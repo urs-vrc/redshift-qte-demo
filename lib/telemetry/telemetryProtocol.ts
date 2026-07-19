@@ -7,7 +7,7 @@
  * snapshots.
  */
 
-import type { Telemetry } from './telemetry'
+import type { Telemetry } from '.'
 
 /** Commands sent from the main thread into the worker. */
 export type TelemetryCommand =

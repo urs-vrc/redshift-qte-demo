@@ -8,7 +8,7 @@ import { keyToDirection } from '../../lib/game-engine/input'
 import { generateSequence } from '../../lib/game-engine'
 import { GameEngine } from '../../lib/game-engine'
 import { useTelemetry } from '../../hooks/useTelemetry'
-import type { Telemetry } from '../../lib/telemetry/telemetry'
+import type { Telemetry } from '../../lib/telemetry'
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows'
 import Dpad from '../Dpad'

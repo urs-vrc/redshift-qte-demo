@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '../supabase'
-import type { Telemetry } from './telemetry'
+import type { Telemetry } from '.'
 import { getDeviceInfo, type DeviceInfo } from '../deviceInfo'
 
 export interface TelemetrySubmission {
