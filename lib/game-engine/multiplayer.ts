@@ -1,34 +1,7 @@
-export type GameMode = 'timer' | 'endless'
+import type { QteSequence } from './types'
 
+/** The multiplayer game variants. */
 export type MultiplayerVariant = 'score' | 'elimination' | 'reaction'
-
-export type GamePhase = 'idle' | 'prestart' | 'playing' | 'gameover'
-
-export type QteDirection = 'up' | 'down' | 'left' | 'right'
-
-export interface QteSequence {
-  id: string
-  steps: QteDirection[]
-}
-
-export interface SingleplayerState {
-  phase: GamePhase
-  mode: GameMode
-  score: number
-  sequence: QteSequence | null
-  /** Index of the next step the player must input. */
-  progress: number
-  /** Remaining time in milliseconds for the active phase. */
-  timeLeftMs: number
-  /** Remaining time in milliseconds for the prestart countdown (starts at 9s). */
-  prestartTimeLeftMs: number
-  /** The selected initial duration in seconds (5, 10, or 15). */
-  limitSeconds: number
-  /** Whether the most recent input was wrong. */
-  failed: boolean
-  /** Total time elapsed in milliseconds while playing (used for endless mode survival time). */
-  elapsedMs: number
-}
 
 export interface MultiplayerParticipant {
   id: string
@@ -60,3 +33,8 @@ export interface Lobby {
    *  countdown to this so everyone shares the same synchronized clock. */
   startedAt: number | null
 }
+
+// Imported at the bottom to avoid a circular type reference with ./types
+// (./types defines QteSequence which Lobby/Participant depend on, while
+// ./types has no dependency on this module).
+import type { GamePhase } from './types'

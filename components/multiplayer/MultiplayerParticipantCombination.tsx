@@ -1,5 +1,5 @@
 import React from 'react';
-import type { QteDirection } from '../../lib/types'
+import type { QteDirection } from '../../lib/game-engine'
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
 

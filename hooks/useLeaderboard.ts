@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { isMultiplayerEnabled, supabase } from '../lib/supabase'
-import type { MultiplayerParticipant } from '../lib/types'
+import type { MultiplayerParticipant } from '../lib/game-engine'
 
 /**
  * Reads the server-side leaderboard for a finished lobby. The standings are

@@ -1,6 +1,18 @@
 export { GameEngine } from './GameEngine'
 export type { GameEngineOptions } from './GameEngine'
-export type { EngineMode, EngineState, EngineCallbacks } from './types'
+export type {
+  GamePhase,
+  QteDirection,
+  QteSequence,
+  EngineMode,
+  EngineState,
+  EngineCallbacks,
+} from './types'
+export type {
+  MultiplayerVariant,
+  MultiplayerParticipant,
+  Lobby,
+} from './multiplayer'
 export {
   generateSequence,
   endlessTimeLimit,

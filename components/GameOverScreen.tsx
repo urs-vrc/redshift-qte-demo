@@ -1,13 +1,13 @@
 import { PixelCard, PixelButton } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Play, Home } from '@pxlkit/ui'
-import type { SingleplayerState } from '../lib/types'
+import type { EngineState } from '../lib/game-engine'
 import type { Telemetry } from '../lib/telemetry'
 import TelemetryStats from './TelemetryStats'
 import TelemetryChart from './TelemetryChart'
 
 interface GameOverScreenProps {
-  state: SingleplayerState
+  state: EngineState
   telemetry: Telemetry
   onRestart: () => void
   onHome: () => void

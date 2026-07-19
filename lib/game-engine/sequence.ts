@@ -1,4 +1,4 @@
-import type { QteDirection, QteSequence } from '../types'
+import type { QteDirection, QteSequence } from './types'
 
 const DIRECTIONS: QteDirection[] = ['up', 'down', 'left', 'right']
 

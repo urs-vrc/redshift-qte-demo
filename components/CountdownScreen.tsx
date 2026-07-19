@@ -1,17 +1,17 @@
 import { PixelButton } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, Home as HomeIcon, SparkleSmall } from '@pxlkit/ui'
-import type { GameMode, MultiplayerVariant } from '../lib/types'
+import type { EngineMode, MultiplayerVariant } from '../lib/game-engine'
 
 interface CountdownScreenProps {
   timeLeftMs: number
-  mode: GameMode | MultiplayerVariant
+  mode: EngineMode | MultiplayerVariant
   playersCount?: number
   onQuit: () => void
   timerSeconds?: number
 }
 
-function getModeInfo(mode: GameMode | MultiplayerVariant, timerSeconds?: number): {
+function getModeInfo(mode: EngineMode | MultiplayerVariant, timerSeconds?: number): {
   difficulty: 'HARD' | 'NORMAL' | 'EASY'
   variant: string
   hint: string

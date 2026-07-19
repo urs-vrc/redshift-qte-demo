@@ -1,5 +1,5 @@
 import { PixelCard, PixelBadge } from '@pxlkit/ui-kit'
-import type { Lobby } from '../../lib/types'
+import type { Lobby } from '../../lib/game-engine'
 import MultiplayerParticipant from './MultiplayerParticipant'
 
 interface MultiplayerSidebarProps {

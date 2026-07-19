@@ -1,30 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import type { GameMode, QteDirection, SingleplayerState } from '../lib/types'
+import type { EngineMode, QteDirection, EngineState } from '../lib/game-engine'
 import { keyToDirection } from '../lib/game-engine/input'
 import { useTelemetry } from './useTelemetry'
 import { GameEngine } from '../lib/game-engine'
 
 export interface UseSingleplayerState {
-  state: SingleplayerState
-  start: (mode: GameMode, limitSeconds: number, sequenceLength?: number) => void
+  state: EngineState
+  start: (mode: EngineMode, limitSeconds: number, sequenceLength?: number) => void
   reset: () => void
   handleInput: (direction: QteDirection) => void
   telemetry: ReturnType<typeof useTelemetry>['telemetry']
-}
-
-function toSingleplayerState(s: any): SingleplayerState {
-  return {
-    phase: s.phase,
-    mode: s.mode === 'endless' ? 'endless' : 'timer',
-    score: s.score,
-    sequence: s.sequence,
-    progress: s.progress,
-    timeLeftMs: s.timeLeftMs,
-    prestartTimeLeftMs: s.prestartTimeLeftMs,
-    limitSeconds: s.limitSeconds,
-    failed: s.failed,
-    elapsedMs: s.elapsedMs,
-  }
 }
 
 export function useSingleplayerState(): UseSingleplayerState {
@@ -50,13 +35,12 @@ export function useSingleplayerState(): UseSingleplayerState {
 
   const engine = engineRef.current
 
-  const start = (mode: GameMode, limitSeconds: number, sequenceLength?: number) => {
+  const start = (mode: EngineMode, limitSeconds: number, sequenceLength?: number) => {
     telemetry.start()
     if (sequenceLength !== undefined) {
       telemetry.setSequenceLength(sequenceLength)
     }
-    const engMode = mode === 'endless' ? 'endless' : 'timer'
-    engine.reconfigure(engMode, limitSeconds, sequenceLength ?? 4)
+    engine.reconfigure(mode, limitSeconds, sequenceLength ?? 4)
     engine.start()
   }
 
@@ -81,7 +65,7 @@ export function useSingleplayerState(): UseSingleplayerState {
   }, [handleInput])
 
   return {
-    state: toSingleplayerState(engine.state),
+    state: engine.state,
     start,
     reset,
     handleInput,

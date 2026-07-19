@@ -1,7 +1,7 @@
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall } from '@pxlkit/ui'
 import type { ReactElement } from 'react'
-import type { QteDirection, SingleplayerState } from '../lib/types'
+import type { QteDirection, EngineState } from '../lib/game-engine'
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from './PixelArrows';
 import Dpad from './Dpad';
@@ -14,7 +14,7 @@ const ARROW: Record<QteDirection, ReactElement> = {
 }
 
 interface GameplayWindowProps {
-  state: SingleplayerState
+  state: EngineState
   onInput: (direction: QteDirection) => void
 }
 

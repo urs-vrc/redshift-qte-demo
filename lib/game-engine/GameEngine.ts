@@ -1,4 +1,4 @@
-import type { QteDirection } from '../types'
+import type { QteDirection } from './types'
 import {
   ENDLESS_MISTAKE_PENALTY_SECONDS,
   ENDLESS_TIME_START_SECONDS,

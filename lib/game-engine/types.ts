@@ -1,4 +1,14 @@
-import type { GamePhase, QteSequence } from '../types'
+/** The lifecycle phases a game (singleplayer or lobby) moves through. */
+export type GamePhase = 'idle' | 'prestart' | 'playing' | 'gameover'
+
+/** The four directional inputs a QTE sequence can contain. */
+export type QteDirection = 'up' | 'down' | 'left' | 'right'
+
+/** A generated sequence of directional steps the player must input in order. */
+export interface QteSequence {
+  id: string
+  steps: QteDirection[]
+}
 
 /** The two gameplay modes the engine supports. */
 export type EngineMode = 'timer' | 'endless'

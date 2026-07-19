@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import type { QteDirection } from '../lib/types'
+import type { QteDirection } from '../lib/game-engine'
 import { useIsTouchDevice } from '../hooks/useIsTouchDevice'
 import {
   PixelArrowUp,

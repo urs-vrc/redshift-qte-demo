@@ -1,4 +1,4 @@
-import type { QteDirection } from '../types'
+import type { QteDirection } from './types'
 
 /** Map a keyboard event to a QTE direction, or null if it isn't a directional key. */
 export function keyToDirection(key: string): QteDirection | null {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall, Home as HomeIcon, Copy } from '@pxlkit/ui'
-import type { GameMode } from '../lib/types'
+import type { EngineMode } from '../lib/game-engine'
 import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
 import { useLeaderboard } from '../hooks/useLeaderboard'
@@ -47,8 +47,8 @@ function GameOverLeaderboard({
   onHome,
 }: {
   code: string
-  participants: import('../lib/types').MultiplayerParticipant[]
-  variant?: import('../lib/types').MultiplayerVariant
+  participants: import('../lib/game-engine').MultiplayerParticipant[]
+  variant?: import('../lib/game-engine').MultiplayerVariant
   telemetry: import('../lib/telemetry').Telemetry | null
   onHome: () => void
 }) {
@@ -63,7 +63,7 @@ function GameOverLeaderboard({
 export default function Home() {
   const [screen, setScreen] = useState<Screen>('menu')
   const [menuTab, setMenuTab] = useState<MenuTab>('solo')
-  const [mode, setMode] = useState<GameMode>('timer')
+  const [mode, setMode] = useState<EngineMode>('timer')
   const [lobbyWindowSeconds, setLobbyWindowSeconds] = useState('5')
   const [sequenceLength, setSequenceLength] = useState('4')
 
@@ -500,7 +500,7 @@ export default function Home() {
             <PixelSegmented
               value={mode}
               options={MODE_OPTIONS}
-              onChange={(v) => setMode(v as GameMode)}
+              onChange={(v) => setMode(v as EngineMode)}
             />
             {mode !== 'endless' && (
               <PixelSegmented

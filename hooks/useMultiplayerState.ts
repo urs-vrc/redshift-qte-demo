@@ -3,7 +3,7 @@ import type {
   Lobby,
   MultiplayerParticipant,
   MultiplayerVariant,
-} from '../lib/types'
+} from '../lib/game-engine'
 import { generateSequence } from '../lib/game-engine'
 import { isMultiplayerEnabled, supabase } from '../lib/supabase'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'

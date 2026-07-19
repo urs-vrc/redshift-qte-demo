@@ -5,7 +5,7 @@ import {
   PixelButton,
   PixelAlert,
 } from '@pxlkit/ui-kit'
-import type { GameMode, MultiplayerVariant } from '../lib/types'
+import type { EngineMode, MultiplayerVariant } from '../lib/game-engine'
 
 const MODE_OPTIONS = [
   { value: 'timer', label: 'TIMER' },
@@ -27,7 +27,7 @@ const LENGTH_OPTIONS = [
 // Maps the solo-mode `GameMode` selection onto the multiplayer variant. Endless
 // solo mode is elimination-based in multiplayer; timer solo mode maps to the
 // score variant (reaction is only reachable from the dedicated MP selector).
-function modeToVariant(mode: GameMode): MultiplayerVariant {
+function modeToVariant(mode: EngineMode): MultiplayerVariant {
   return mode === 'endless' ? 'elimination' : 'score'
 }
 
@@ -65,7 +65,7 @@ export default function MatchSettingsDialog({
   onClose,
 }: MatchSettingsDialogProps) {
   // Seed local state from the lobby's current settings each time the dialog opens.
-  const [mode, setMode] = useState<GameMode>(
+  const [mode, setMode] = useState<EngineMode>(
     initialVariant === 'elimination' ? 'endless' : 'timer',
   )
   const [windowSeconds, setWindowSeconds] = useState(String(initialWindowSeconds))
@@ -118,7 +118,7 @@ export default function MatchSettingsDialog({
           label="Mode"
           value={mode}
           options={MODE_OPTIONS}
-          onChange={(v) => setMode(v as GameMode)}
+          onChange={(v) => setMode(v as EngineMode)}
           disabled={disabled}
         />
         {isEndless ? (

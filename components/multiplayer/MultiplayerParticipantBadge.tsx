@@ -1,5 +1,5 @@
 import { PixelAvatar } from '@pxlkit/ui-kit'
-import type { MultiplayerParticipant as Participant } from '../../lib/types'
+import type { MultiplayerParticipant as Participant } from '../../lib/game-engine'
 
 interface MultiplayerParticipantBadgeProps {
   participant: Participant
