@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge, PixelAlert, PixelModal, PixelSelect } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
-import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
+import { Clock, SparkleSmall, Home as HomeIcon, Copy } from '@pxlkit/ui'
 import type { GameMode, MultiplayerVariant } from '../lib/types'
 import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
@@ -78,6 +78,7 @@ export default function Home() {
     multi.lobby?.variant ?? 'score',
   )
   const [modeDialogError, setModeDialogError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Share-link support: ?lobby=CODE drops the user straight into the join flow.
   useEffect(() => {
@@ -217,6 +218,23 @@ export default function Home() {
           <h1 className="font-pixel text-center text-2xl text-retro-text md:text-3xl">
             Lobby {multi.lobby.code}
           </h1>
+          <button
+            type="button"
+            onClick={async () => {
+              const url = `${window.location.origin}${window.location.pathname}?lobby=${multi.lobby!.code}`
+              try {
+                await navigator.clipboard.writeText(url)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              } catch {
+                // Clipboard may be unavailable (e.g. insecure context); ignore.
+              }
+            }}
+            className="flex items-center gap-2 rounded-full border border-retro-border bg-retro-surface px-4 py-1.5 font-pixel text-xs text-retro-text transition-colors hover:border-retro-border-strong"
+          >
+            <PxlKitIcon icon={Copy} size={14} />
+            {copied ? 'Copied!' : 'Copy invite link'}
+          </button>
 
           <section className="w-full max-w-5xl rounded-2xl border-2 border-retro-border bg-retro-surface p-4 md:p-8">
             <div className="mx-auto mb-3 flex max-w-xl items-center justify-between gap-3">
