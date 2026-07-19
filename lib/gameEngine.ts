@@ -155,6 +155,7 @@ export class GameEngine {
           const dead = { ...this.state, phase: 'gameover' as const, sequence: null, timeLeftMs: 0, progress: 0 }
           this.callbacks.onTimeUp?.(dead)
           this.state = dead
+          this.callbacks.onStateChange?.(dead)
           return
         }
         const next = { ...this.state, progress: 0, timeLeftMs: penalized }
@@ -203,10 +204,14 @@ export class GameEngine {
     if (this.state.phase === 'prestart') {
       const nextPrestart = Math.max(0, this.state.prestartTimeLeftMs - delta)
       if (nextPrestart <= 0) {
-        this.state = { ...this.state, phase: 'playing', prestartTimeLeftMs: 0 }
+        const next = { ...this.state, phase: 'playing' as const, prestartTimeLeftMs: 0 }
+        this.state = next
+        this.callbacks.onStateChange?.(next)
         return
       }
-      this.state = { ...this.state, prestartTimeLeftMs: nextPrestart }
+      const next = { ...this.state, prestartTimeLeftMs: nextPrestart }
+      this.state = next
+      this.callbacks.onStateChange?.(next)
       return
     }
 
@@ -222,6 +227,7 @@ export class GameEngine {
         }
         this.callbacks.onTimeUp?.(final)
         this.state = final
+        this.callbacks.onStateChange?.(final)
         return
       }
 

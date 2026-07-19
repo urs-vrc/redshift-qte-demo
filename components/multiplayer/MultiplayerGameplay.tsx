@@ -190,6 +190,9 @@ export default function MultiplayerGameplay({
             localParticipantRef.current = p
             setLocalParticipant(p)
             trackLocal(p)
+            // Timer-like variants: the local player's clock ran out, so they're
+            // done. End the round (host broadcasts gameover for everyone).
+            void endRound()
           }
         },
       },
