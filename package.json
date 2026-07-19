@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
     "supabase:start": "supabase start",

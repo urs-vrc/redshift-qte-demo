@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge, PixelAlert, PixelModal, PixelSelect } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
@@ -6,6 +6,7 @@ import type { GameMode, MultiplayerParticipant, MultiplayerVariant } from '../li
 import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
 import { useAuth } from '../hooks/useAuth'
+import { submitTelemetry } from '../lib/telemetrySubmission'
 import GameplayWindow from '../components/GameplayWindow'
 import GameOverScreen from '../components/GameOverScreen'
 import PrestartLobby from '../components/PrestartLobby'
@@ -77,6 +78,22 @@ export default function Home() {
   }, [auth.status, multi.lobby])
 
   const sharedLobbyCode = new URLSearchParams(window.location.search).get('lobby')
+
+  // Submit singleplayer telemetry once when a session ends (game over).
+  const telemetrySubmittedRef = useRef(false)
+  useEffect(() => {
+    if (screen === 'single' && single.state.phase === 'gameover' && !telemetrySubmittedRef.current) {
+      telemetrySubmittedRef.current = true
+      void submitTelemetry({
+        mode: single.state.mode,
+        score: single.state.score,
+        telemetry: single.telemetry,
+      })
+    }
+    if (screen !== 'single') {
+      telemetrySubmittedRef.current = false
+    }
+  }, [screen, single.state.phase, single.state.mode, single.state.score, single.telemetry])
 
   useEffect(() => {
     if (multi.lobby?.phase === 'prestart') {
