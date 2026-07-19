@@ -19,7 +19,7 @@ export default function ResultsLeaderboard({ participants, onHome, telemetry }: 
     .map((p, i) => ({ ...p, rank: i + 1 }))
 
   return (
-    <>
+    <div className="flex w-full flex-col items-center gap-6">
       <PixelCard title="Results" tone="neutral" className="w-full max-w-lg">
         <PixelTable
           data={ranked}
@@ -61,6 +61,6 @@ export default function ResultsLeaderboard({ participants, onHome, telemetry }: 
           <TelemetryChart telemetry={telemetry} className="max-w-3xl" />
         </>
       )}
-    </>
+    </div>
   )
 }

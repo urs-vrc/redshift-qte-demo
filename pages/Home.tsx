@@ -52,7 +52,7 @@ function GameOverLeaderboard({
 }) {
   const { rows } = useLeaderboard(code, participants)
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-retro-bg">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 bg-retro-bg">
       <ResultsLeaderboard participants={rows} telemetry={telemetry} onHome={onHome} />
     </div>
   )
