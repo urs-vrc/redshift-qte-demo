@@ -10,6 +10,7 @@ import {
   endlessSequenceLength,
   endlessTimeLimit,
   ENDLESS_MISTAKE_PENALTY_SECONDS,
+  ENDLESS_TIME_START_SECONDS,
 } from '../../lib/qte'
 import { useTelemetry } from '../../hooks/useTelemetry'
 import TelemetryStats from '../TelemetryStats'
@@ -19,6 +20,7 @@ interface MultiplayerGameplayProps {
   lobby: Lobby
   localParticipantId: string | null
   onLeave: () => void
+  trackLocal: (participant: MultiplayerParticipant) => void
 }
 
 import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
@@ -32,6 +34,11 @@ const ARROW: Record<QteDirection, ReactElement> = {
 }
 
 const DEFAULT_STEPS: QteDirection[] = ['up', 'right', 'down', 'down', 'down']
+
+// Multiplayer variants map onto the singleplayer modes:
+//   'score' / 'reaction' -> singleplayer 'timer'   (fixed clock, no ramp, wrong input resets progress only)
+//   'elimination'        -> singleplayer 'endless' (decaying clock, growing sequences, wrong input drains clock)
+const SEQUENCE_BASE_LENGTH = 4
 
 /** Sidebar row per participant — matches MP.png layout */
 function ParticipantRow({ participant }: { participant: MultiplayerParticipant }) {
@@ -85,7 +92,7 @@ function ParticipantRow({ participant }: { participant: MultiplayerParticipant }
   )
 }
 
-export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave }: MultiplayerGameplayProps) {
+export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave, trackLocal }: MultiplayerGameplayProps) {
   const [localParticipant, setLocalParticipant] = useState<MultiplayerParticipant>(() => {
     const orig =
       lobby.participants.find((p) => p.id === localParticipantId) ??
@@ -106,14 +113,29 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
   // Real opponents are the other presence participants in the lobby.
   const opponents = lobby.participants.filter((p) => p.id !== localParticipant.id)
 
-  const [timeLeftMs, setTimeLeftMs] = useState(lobby.variant === 'elimination' ? 15000 : 30000)
-  const [limitSeconds, setLimitSeconds] = useState(15)
+  const [timeLeftMs, setTimeLeftMs] = useState(
+    lobby.variant === 'elimination' ? ENDLESS_TIME_START_SECONDS * 1000 : 5000,
+  )
+  const [limitSeconds, setLimitSeconds] = useState(
+    lobby.variant === 'elimination' ? ENDLESS_TIME_START_SECONDS : 5,
+  )
+  const [eliminated, setEliminated] = useState(false)
+
+  // Keep the latest local participant in a ref so the timer effect can broadcast
+  // eliminations without depending on a stale closure.
+  const localParticipantRef = useRef(localParticipant)
+  useEffect(() => {
+    localParticipantRef.current = localParticipant
+  }, [localParticipant])
 
   // Refs backing the match clock so mistake penalties stick and the timer can read the
   // latest limit without restarting the interval (which would reset telemetry).
-  const timeLeftRef = useRef(lobby.variant === 'elimination' ? 15000 : 30000)
+  const timeLeftRef = useRef(
+    lobby.variant === 'elimination' ? ENDLESS_TIME_START_SECONDS * 1000 : 5000,
+  )
   const lastTickRef = useRef(0)
   const limitSecondsRef = useRef(limitSeconds)
+  const eliminatedRef = useRef(false)
   useEffect(() => {
     limitSecondsRef.current = limitSeconds
   }, [limitSeconds])
@@ -121,8 +143,10 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
   const telemetry = useTelemetry()
 
   // Match timer — decrements the local player's clock so mistake penalties stick.
+  // Timer-like variants (score/reaction) run a single fixed clock; the endless-like
+  // variant (elimination) uses a continuously decaying clock and ends in elimination.
   useEffect(() => {
-    timeLeftRef.current = lobby.variant === 'elimination' ? limitSecondsRef.current * 1000 : 30000
+    timeLeftRef.current = lobby.variant === 'elimination' ? limitSecondsRef.current * 1000 : 5000
     setTimeLeftMs(timeLeftRef.current)
     lastTickRef.current = Date.now()
     telemetry.start()
@@ -135,8 +159,13 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
       timeLeftRef.current = Math.max(0, timeLeftRef.current - delta)
       if (timeLeftRef.current <= 0) {
         if (lobby.variant === 'elimination') {
-          // Survival clock cycles to the next (shorter) round.
-          timeLeftRef.current = limitSecondsRef.current * 1000
+          // Clock ran out: the local player is eliminated.
+          eliminatedRef.current = true
+          setEliminated(true)
+          setLocalParticipant((prev) => ({ ...prev, alive: false }))
+          trackLocal({ ...localParticipantRef.current, alive: false })
+          telemetry.stop()
+          clearInterval(interval)
         } else {
           telemetry.stop()
           clearInterval(interval)
@@ -148,49 +177,72 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
       telemetry.stop()
       clearInterval(interval)
     }
-  }, [lobby.variant, telemetry])
+}, [lobby.variant, telemetry, trackLocal])
 
-  const handleInput = useCallback((direction: QteDirection) => {
-    setLocalParticipant((prev) => {
-      if (!prev.alive || !prev.sequence) return prev
-      const steps = prev.sequence.steps
-      const expected = steps[prev.progress]
-      const correct = direction === expected
-      telemetry.recordInput(correct)
+  const handleInput = useCallback(
+    (direction: QteDirection) => {
+      if (eliminatedRef.current) return
+      setLocalParticipant((prev) => {
+        if (!prev.alive || !prev.sequence) return prev
+        const steps = prev.sequence.steps
+        const expected = steps[prev.progress]
+        const correct = direction === expected
+        telemetry.recordInput(correct)
 
-      if (!correct) {
-        // Mistake penalty (#5): drain the local player's clock directly.
-        timeLeftRef.current = Math.max(0, timeLeftRef.current - ENDLESS_MISTAKE_PENALTY_SECONDS * 1000)
-        setTimeLeftMs(timeLeftRef.current)
-        return { ...prev, progress: 0 }
-      }
-
-      const nextProgress = prev.progress + 1
-      if (nextProgress >= steps.length) {
-        telemetry.recordSequenceComplete()
-        const newScore = prev.score + 500
-        telemetry.setScore(newScore)
-        const completions = newScore / 500
-
-        // Difficulty ramp (#2 + #3): continuous timer decay and monotonic length growth.
-        const nextLength = endlessSequenceLength(completions, 5)
-        if (lobby.variant === 'elimination') {
-          const nextLimitSeconds = endlessTimeLimit(completions)
-          setLimitSeconds(nextLimitSeconds)
-          timeLeftRef.current = nextLimitSeconds * 1000
-          setTimeLeftMs(timeLeftRef.current)
+        if (!correct) {
+          // Only the endless-like (elimination) variant drains the clock on a
+          // mistake, mirroring singleplayer 'endless'. Timer-like variants just
+          // reset progress without a time penalty (singleplayer 'timer').
+          if (lobby.variant === 'elimination') {
+            const penalized = Math.max(
+              0,
+              timeLeftRef.current - ENDLESS_MISTAKE_PENALTY_SECONDS * 1000,
+            )
+            timeLeftRef.current = penalized
+            setTimeLeftMs(penalized)
+            if (penalized <= 0) {
+              eliminatedRef.current = true
+              setEliminated(true)
+              const eliminatedParticipant = { ...prev, alive: false, progress: 0 }
+              trackLocal(eliminatedParticipant)
+              return eliminatedParticipant
+            }
+          }
+          return { ...prev, progress: 0 }
         }
 
-        return {
-          ...prev,
-          score: newScore,
-          progress: 0,
-          sequence: generateSequence(nextLength),
+        const nextProgress = prev.progress + 1
+        if (nextProgress >= steps.length) {
+          telemetry.recordSequenceComplete()
+          const newScore = prev.score + 1
+          telemetry.setScore(newScore)
+          const completions = newScore
+
+          // Difficulty ramp (#2 + #3): continuous timer decay and monotonic length growth.
+          const nextLength = endlessSequenceLength(completions, SEQUENCE_BASE_LENGTH)
+          if (lobby.variant === 'elimination') {
+            const nextLimitSeconds = endlessTimeLimit(completions)
+            setLimitSeconds(nextLimitSeconds)
+            timeLeftRef.current = nextLimitSeconds * 1000
+            setTimeLeftMs(timeLeftRef.current)
+          }
+
+          const updated = {
+            ...prev,
+            score: newScore,
+            progress: 0,
+            sequence: generateSequence(nextLength),
+          }
+          trackLocal(updated)
+          return updated
         }
-      }
-      return { ...prev, progress: nextProgress }
-    })
-  }, [lobby.variant, telemetry])
+        const updated = { ...prev, progress: nextProgress }
+        trackLocal(updated)
+        return updated
+      })
+    },
+    [lobby.variant, telemetry, trackLocal],
+  )
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -205,7 +257,7 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
   const activeSequence = localParticipant.sequence?.steps ?? DEFAULT_STEPS
   const playersRemaining = list.filter((p) => p.alive).length
 
-  const clockDenominator = lobby.variant === 'elimination' ? limitSeconds * 1000 : 30000
+  const clockDenominator = lobby.variant === 'elimination' ? limitSeconds * 1000 : 5000
   const pct = Math.max(0, Math.min(100, (timeLeftMs / clockDenominator) * 100))
 
   const formatTime = (ms: number) => {
@@ -287,7 +339,13 @@ export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave
         </div>
 
         {/* On-screen D-pad — only shown on touch devices, below the timer */}
-        <Dpad onInput={handleInput} disabled={!localParticipant.alive} />
+        <Dpad onInput={handleInput} disabled={eliminated || !localParticipant.alive} />
+
+        {eliminated && (
+          <p className="font-pixel text-center text-sm text-red-400">
+            You were eliminated! Hang tight — the match ends when the host finishes.
+          </p>
+        )}
 
         {/* Live telemetry HUD */}
         <TelemetryStats telemetry={telemetry.telemetry} title="Your Telemetry" className="max-w-lg" />

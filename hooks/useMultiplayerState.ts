@@ -23,6 +23,8 @@ export interface UseMultiplayerState {
   updateVariant: (variant: MultiplayerVariant) => Promise<void>
   /** Host-only: persist final standings and broadcast gameover. */
   submitResults: () => Promise<void>
+  /** Broadcast the local participant's latest state to the lobby via presence. */
+  trackLocal: (participant: MultiplayerParticipant) => void
 }
 
 function emptyLobby(code: string, hostName: string, variant: MultiplayerVariant, hostId: string): Lobby {
@@ -263,6 +265,15 @@ export function useMultiplayerState(): UseMultiplayerState {
 
   useEffect(() => teardown, [teardown])
 
+  const trackLocal = useCallback(
+    (participant: MultiplayerParticipant) => {
+      if (isMultiplayerEnabled && supabase && channelRef.current) {
+        void channelRef.current.track(participant)
+      }
+    },
+    [isMultiplayerEnabled, supabase],
+  )
+
   // Multiplayer is enabled only when a real Supabase backend is configured.
   // Set VITE_MOCK_MODE=true to force-enable the UI without a backend (mock data).
   const isMockMode = import.meta.env.VITE_MOCK_MODE === 'true'
@@ -278,5 +289,6 @@ export function useMultiplayerState(): UseMultiplayerState {
     startGame,
     updateVariant,
     submitResults,
+    trackLocal,
   }
 }

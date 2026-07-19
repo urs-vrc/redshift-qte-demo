@@ -136,6 +136,21 @@ Deno.serve(async (req: Request) => {
     )
   }
 
+  // A fresh round is starting: clear the previous round's standings so the
+  // results screen only ever shows the current round's leaderboard.
+  if (phase === 'playing') {
+    const { error: clearError } = await supabase
+      .from('leaderboard')
+      .delete()
+      .eq('lobby_code', code)
+    if (clearError) {
+      return new Response(
+        JSON.stringify({ ok: false, error: clearError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+  }
+
   return new Response(
     JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

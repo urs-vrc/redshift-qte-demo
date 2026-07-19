@@ -5,6 +5,7 @@ import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
 import type { GameMode, MultiplayerVariant } from '../lib/types'
 import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
+import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../hooks/useAuth'
 import { submitTelemetry } from '../lib/telemetrySubmission'
 import GameplayWindow from '../components/GameplayWindow'
@@ -40,6 +41,25 @@ const LENGTH_OPTIONS = [
   { value: '6', label: '6-combo' },
   { value: '8', label: '8-combo' },
 ]
+
+// Game-over screen: renders the server-side leaderboard (persisted by the host
+// when the round ends) so standings survive after presence participants leave.
+function GameOverLeaderboard({
+  code,
+  participants,
+  onHome,
+}: {
+  code: string
+  participants: import('../lib/types').MultiplayerParticipant[]
+  onHome: () => void
+}) {
+  const { rows } = useLeaderboard(code, participants)
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-retro-bg">
+      <ResultsLeaderboard participants={rows} onHome={onHome} />
+    </div>
+  )
+}
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>('menu')
@@ -143,15 +163,14 @@ export default function Home() {
   if (screen === 'multi') {
     if (multi.lobby && multi.lobby.phase === 'gameover') {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-retro-bg">
-          <ResultsLeaderboard
-            participants={multi.lobby.participants}
-            onHome={() => {
-              multi.leaveLobby()
-              setScreen('menu')
-            }}
-          />
-        </div>
+        <GameOverLeaderboard
+          code={multi.lobby.code}
+          participants={multi.lobby.participants}
+          onHome={() => {
+            multi.leaveLobby()
+            setScreen('menu')
+          }}
+        />
       )
     }
     if (multi.lobby && multi.lobby.phase === 'prestart') {
@@ -179,6 +198,7 @@ export default function Home() {
         <MultiplayerGameplay
           lobby={multi.lobby}
           localParticipantId={multi.localParticipantId}
+          trackLocal={multi.trackLocal}
           onLeave={() => {
             multi.leaveLobby()
             setScreen('menu')
