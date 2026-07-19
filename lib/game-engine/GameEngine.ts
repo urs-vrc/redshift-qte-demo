@@ -1,36 +1,29 @@
-import type { GamePhase, QteDirection, QteSequence } from './types'
+import type { QteDirection } from '../types'
 import {
   ENDLESS_MISTAKE_PENALTY_SECONDS,
   ENDLESS_TIME_START_SECONDS,
   endlessSequenceLength,
   endlessTimeLimit,
   generateSequence,
-} from './qte'
+} from './sequence'
+import type { EngineCallbacks, EngineMode, EngineState } from './types'
 
-export type EngineMode = 'timer' | 'endless'
-
-export interface EngineState {
-  phase: GamePhase
+export interface GameEngineOptions {
   mode: EngineMode
-  score: number
-  sequence: QteSequence | null
-  progress: number
-  timeLeftMs: number
-  /** Current per-sequence time limit in seconds. */
-  limitSeconds: number
-  prestartTimeLeftMs: number
-  elapsedMs: number
-  failed: boolean
+  windowSeconds: number
+  baseLength: number
+  callbacks?: EngineCallbacks
 }
 
-export interface EngineCallbacks {
-  onTick?(timeLeftMs: number): void
-  onTimeUp?(state: EngineState): void
-  onInput?(correct: boolean): void
-  onSequenceComplete?(score: number): void
-  onStateChange?(state: EngineState): void
-}
-
+/**
+ * Framework-agnostic game engine that owns the core QTE gameplay loop:
+ * the prestart countdown, the playing clock, input handling, and the
+ * gameover transition. It drives itself via an internal interval and
+ * notifies consumers through {@link EngineCallbacks}.
+ *
+ * State is held mutably on the instance; React (or any other UI layer)
+ * re-renders by subscribing to `onStateChange`.
+ */
 export class GameEngine {
   public state!: EngineState
 
@@ -40,7 +33,7 @@ export class GameEngine {
   private callbacks: EngineCallbacks = {}
   private timerRef: ReturnType<typeof setInterval> | null = null
 
-  constructor(opts: { mode: EngineMode; windowSeconds: number; baseLength: number; callbacks?: EngineCallbacks }) {
+  constructor(opts: GameEngineOptions) {
     this.mode = opts.mode
     this.windowSeconds = opts.windowSeconds
     this.baseLength = opts.baseLength
@@ -48,6 +41,7 @@ export class GameEngine {
     this.reset()
   }
 
+  /** Begin a round with a 9s prestart countdown before play starts. */
   start(): void {
     this.clearTimer()
     const initialLength =
@@ -75,6 +69,7 @@ export class GameEngine {
     this.beginTimer()
   }
 
+  /** Begin a round immediately in the playing phase (no prestart countdown). */
   startImmediate(): void {
     this.clearTimer()
     const initialLength =
@@ -114,6 +109,7 @@ export class GameEngine {
     }, 50)
   }
 
+  /** Reset to the idle state, clearing any running timer. */
   reset(): void {
     this.clearTimer()
     this.state = {
@@ -133,6 +129,7 @@ export class GameEngine {
     }
   }
 
+  /** Change the engine's mode/settings. Does not start a new round. */
   reconfigure(mode: EngineMode, windowSeconds: number, baseLength: number): void {
     this.clearTimer()
     this.mode = mode
@@ -140,6 +137,7 @@ export class GameEngine {
     this.baseLength = baseLength
   }
 
+  /** Process a directional input against the current sequence. */
   handleInput(direction: QteDirection): void {
     if (this.state.phase !== 'playing' || !this.state.sequence) return
 
@@ -200,6 +198,7 @@ export class GameEngine {
     this.callbacks.onStateChange?.(next)
   }
 
+  /** Advance the clock by `delta` ms, handling phase transitions. */
   tick(delta: number): void {
     if (this.state.phase === 'prestart') {
       const nextPrestart = Math.max(0, this.state.prestartTimeLeftMs - delta)
@@ -242,6 +241,7 @@ export class GameEngine {
     }
   }
 
+  /** Stop the engine and clear its timer. */
   destroy(): void {
     this.clearTimer()
   }

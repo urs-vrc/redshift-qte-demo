@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import type { GameMode, QteDirection, SingleplayerState } from '../lib/types'
-import { keyToDirection } from '../lib/qte'
+import { keyToDirection } from '../lib/game-engine/input'
 import { useTelemetry } from './useTelemetry'
-import { GameEngine } from '../lib/gameEngine'
+import { GameEngine } from '../lib/game-engine'
 
 export interface UseSingleplayerState {
   state: SingleplayerState

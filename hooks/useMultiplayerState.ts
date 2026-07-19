@@ -4,7 +4,7 @@ import type {
   MultiplayerParticipant,
   MultiplayerVariant,
 } from '../lib/types'
-import { generateSequence } from '../lib/qte'
+import { generateSequence } from '../lib/game-engine'
 import { isMultiplayerEnabled, supabase } from '../lib/supabase'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 

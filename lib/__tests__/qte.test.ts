@@ -3,11 +3,11 @@ import {
   generateSequence,
   endlessTimeLimit,
   endlessSequenceLength,
-  keyToDirection,
   ENDLESS_TIME_FLOOR_SECONDS,
   ENDLESS_TIME_START_SECONDS,
   ENDLESS_MAX_LENGTH,
-} from '../qte'
+} from '../game-engine'
+import { keyToDirection } from '../game-engine/input'
 
 describe('generateSequence', () => {
   it('returns a sequence of the requested length with valid directions', () => {
