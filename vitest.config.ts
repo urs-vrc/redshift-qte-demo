@@ -8,7 +8,7 @@ import { defineConfig } from 'vitest/config'
 //
 // Integration tests against the local Supabase stack (Edge Function + DB + RLS)
 // live in `lib/**/*.integration.test.ts` and are skipped unless
-// VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are provided (set automatically
+// VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY are provided (set automatically
 // by `supabase start` in CI / local dev).
 export default defineConfig({
   test: {

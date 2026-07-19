@@ -52,7 +52,7 @@ export default function PrestartLobby({ enabled, defaultName, prefillCode, onCre
           <PixelAlert
             tone="red"
             label="Multiplayer unavailable"
-            message="Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable it."
+            message="Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to enable it."
           />
         </PixelCard>
         <PixelButton

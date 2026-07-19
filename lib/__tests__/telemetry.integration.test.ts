@@ -5,12 +5,12 @@ import type { Telemetry } from '../telemetry'
 
 // Integration tests against a *running* local Supabase stack.
 //
-// These are skipped unless VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are
+// These are skipped unless VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are
 // set — which `supabase start` does automatically (it writes them to the
 // shell environment). In CI this runs after `supabase start`; locally you can
 // run:  eval "$(supabase start)" && pnpm test:integration
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 const describeOrSkip = url && anonKey ? describe : describe.skip
 
 const sampleTelemetry: Telemetry = {

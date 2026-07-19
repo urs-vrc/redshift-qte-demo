@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Make sure to set the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environment variables in a `.env` file in the root of the project, which you can get from your Supabase project settings.
+Make sure to set the `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` environment variables in a `.env` file in the root of the project, which you can get from your Supabase project settings.
 
 ### Performing Migrations on Supabase
 
