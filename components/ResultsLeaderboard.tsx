@@ -11,12 +11,17 @@ interface ResultsLeaderboardProps {
   onHome: () => void
   /** Local player's telemetry for the match; shown below the standings. */
   telemetry?: Telemetry | null
+  /** When 'elimination', the Status (alive/eliminated) column is shown. For
+   *  timer-score modes every player is alive so the column is redundant. */
+  variant?: 'score' | 'elimination' | 'reaction'
 }
 
-export default function ResultsLeaderboard({ participants, onHome, telemetry }: ResultsLeaderboardProps) {
+export default function ResultsLeaderboard({ participants, onHome, telemetry, variant }: ResultsLeaderboardProps) {
   const ranked = [...participants]
     .sort((a, b) => b.score - a.score)
     .map((p, i) => ({ ...p, rank: i + 1 }))
+
+  const isElimination = variant === 'elimination'
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
@@ -26,16 +31,20 @@ export default function ResultsLeaderboard({ participants, onHome, telemetry }: 
           columns={[
             { key: 'rank', header: '#', align: 'left' },
             { key: 'name', header: 'Runner' },
-            {
-              key: 'alive',
-              header: 'Status',
-              render: (row) =>
-                row.alive ? (
-                  <PixelBadge tone="green">alive</PixelBadge>
-                ) : (
-                  <PixelBadge tone="red">eliminated</PixelBadge>
-                ),
-            },
+            ...(isElimination
+              ? [
+                  {
+                    key: 'alive' as const,
+                    header: 'Status' as const,
+                    render: (row: MultiplayerParticipant & { rank: number }) =>
+                      row.alive ? (
+                        <PixelBadge tone="green">alive</PixelBadge>
+                      ) : (
+                        <PixelBadge tone="red">eliminated</PixelBadge>
+                      ),
+                  },
+                ]
+              : []),
             {
               key: 'score',
               header: 'Score',

@@ -45,6 +45,8 @@ export function useLeaderboard(
               name: r.name,
               score: r.score,
               alive: r.alive,
+              ready: false,
+              finished: true,
               sequence: null,
               progress: 0,
             })),

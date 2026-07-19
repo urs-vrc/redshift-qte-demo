@@ -35,6 +35,10 @@ export interface MultiplayerParticipant {
   name: string
   score: number
   alive: boolean
+  /** Whether the participant has signalled they are ready in the lobby. */
+  ready: boolean
+  /** Whether the participant has finished their round (timer expired or completed). */
+  finished: boolean
   /** Current sequence assigned to this participant, if any. */
   sequence: QteSequence | null
   /** Progress within the current sequence. */

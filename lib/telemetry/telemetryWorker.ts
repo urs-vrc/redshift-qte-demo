@@ -8,7 +8,7 @@
  * with messages — the render loop stays smooth regardless of input rate.
  */
 
-import { TelemetryTracker } from './telemetry'
+import { TelemetryTracker } from '.'
 import type { TelemetryCommand, TelemetryEvent } from './telemetryProtocol'
 
 const tracker = new TelemetryTracker()

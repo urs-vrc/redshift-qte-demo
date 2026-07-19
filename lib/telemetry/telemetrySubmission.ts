@@ -7,9 +7,9 @@
  * so a telemetry hiccup can never block the player from seeing their results.
  */
 
-import { supabase } from './supabase'
-import type { Telemetry } from './telemetry'
-import { getDeviceInfo, type DeviceInfo } from './deviceInfo'
+import { supabase } from '../supabase'
+import type { Telemetry } from '.'
+import { getDeviceInfo, type DeviceInfo } from '../deviceInfo'
 
 export interface TelemetrySubmission {
   /** The game mode the session was played in. */

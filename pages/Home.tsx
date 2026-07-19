@@ -7,7 +7,7 @@ import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../hooks/useAuth'
-import { submitTelemetry } from '../lib/telemetrySubmission'
+import { submitTelemetry } from '../lib/telemetry/telemetrySubmission'
 import GameplayWindow from '../components/GameplayWindow'
 import GameOverScreen from '../components/GameOverScreen'
 import PrestartLobby from '../components/PrestartLobby'
@@ -42,18 +42,20 @@ const LENGTH_OPTIONS = [
 function GameOverLeaderboard({
   code,
   participants,
+  variant,
   telemetry,
   onHome,
 }: {
   code: string
   participants: import('../lib/types').MultiplayerParticipant[]
+  variant?: import('../lib/types').MultiplayerVariant
   telemetry: import('../lib/telemetry').Telemetry | null
   onHome: () => void
 }) {
   const { rows } = useLeaderboard(code, participants)
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 bg-retro-bg">
-      <ResultsLeaderboard participants={rows} telemetry={telemetry} onHome={onHome} />
+      <ResultsLeaderboard participants={rows} variant={variant} telemetry={telemetry} onHome={onHome} />
     </div>
   )
 }
@@ -168,6 +170,7 @@ export default function Home() {
         <GameOverLeaderboard
           code={multi.lobby.code}
           participants={multi.lobby.participants}
+          variant={multi.lobby.variant}
           telemetry={multiTelemetry}
           onHome={() => {
             multi.leaveLobby()
@@ -273,7 +276,8 @@ export default function Home() {
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {participants.map((participant) => {
-                const isReady = participant.alive
+                const isReady = participant.ready
+                const isLocal = participant.id === multi.localParticipantId
                 return (
                   <div
                     key={participant.id}
@@ -287,9 +291,21 @@ export default function Home() {
                       />
                       <span className="truncate text-sm text-retro-text">{participant.name}</span>
                     </div>
-                    <PixelBadge tone={isReady ? 'green' : 'neutral'}>
-                      {isReady ? 'READY' : 'NOT READY'}
-                    </PixelBadge>
+                    <div className="flex items-center gap-2">
+                      <PixelBadge tone={isReady ? 'green' : 'neutral'}>
+                        {isReady ? 'READY' : 'NOT READY'}
+                      </PixelBadge>
+                      {!multi.isHost && isLocal && (
+                        <PixelButton
+                          tone={isReady ? 'green' : 'neutral'}
+                          variant="solid"
+                          size="sm"
+                          onClick={multi.readyUp}
+                        >
+                          {isReady ? 'Unready' : 'Ready'}
+                        </PixelButton>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -300,10 +316,30 @@ export default function Home() {
                 tone="neutral"
                 size="lg"
                 iconLeft={<PxlKitIcon icon={Clock} size={16} />}
-                onClick={multi.startGame}
+                onClick={() => {
+                  if (!multi.isHost) return
+                  const readyCount = participants.filter((p) => p.ready).length
+                  const totalCount = participants.length
+                  // Solo lobby: host starts immediately. Multi: need ≥40% ready.
+                  const canStart = totalCount <= 1 || (readyCount / totalCount >= 0.4 && readyCount >= 1)
+                  if (canStart) {
+                    multi.startGame()
+                  }
+                }}
+                disabled={!multi.isHost}
                 className="min-w-48"
               >
-                START
+                {multi.isHost
+                  ? (() => {
+                      const readyCount = participants.filter((p) => p.ready).length
+                      const totalCount = participants.length
+                      // Solo lobby: host starts immediately. Multi: need ≥40% ready.
+                      const canStart = totalCount <= 1 || (readyCount / totalCount >= 0.4 && readyCount >= 1)
+                      return canStart
+                        ? 'START'
+                        : `WAITING (${readyCount}/${totalCount})`
+                    })()
+                  : 'WAITING FOR HOST'}
               </PixelButton>
               <PixelButton
                 tone="neutral"

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { submitTelemetry } from '../telemetrySubmission'
+import { submitTelemetry } from '../telemetry/telemetrySubmission'
 import type { Telemetry } from '../telemetry'
 
 // Integration tests against a *running* local Supabase stack.
@@ -52,11 +52,11 @@ describeOrSkip('telemetry submission (integration)', () => {
       .limit(1)
       .single()
     expect(error).toBeNull()
-    expect(data.mode).toBe('timer')
-    expect(data.score).toBe(42)
-    expect(data.device_type).toBeTruthy()
-    expect(data.browser).toBeTruthy()
-    expect(typeof data.is_touch).toBe('boolean')
+    expect(data!.mode).toBe('timer')
+    expect(data!.score).toBe(42)
+    expect(data!.device_type).toBeTruthy()
+    expect(data!.browser).toBeTruthy()
+    expect(typeof data!.is_touch).toBe('boolean')
   })
 
   it('rejects an invalid mode at the Edge Function (400)', async () => {

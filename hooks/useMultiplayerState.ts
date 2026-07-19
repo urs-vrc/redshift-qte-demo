@@ -4,7 +4,7 @@ import type {
   MultiplayerParticipant,
   MultiplayerVariant,
 } from '../lib/types'
-import { generateSequence } from '../lib/qte'
+import { generateSequence } from '../lib/game-engine'
 import { isMultiplayerEnabled, supabase } from '../lib/supabase'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
@@ -32,6 +32,8 @@ export interface UseMultiplayerState {
   submitResults: () => Promise<void>
   /** Broadcast the local participant's latest state to the lobby via presence. */
   trackLocal: (participant: MultiplayerParticipant) => void
+  /** Toggle the local participant's ready status in the lobby. */
+  readyUp: () => void
   /** End the current round: host persists standings + broadcasts gameover. */
   endRound: () => Promise<void>
 }
@@ -59,6 +61,8 @@ function emptyLobby(
         name: hostName,
         score: 0,
         alive: true,
+        ready: false,
+        finished: false,
         sequence: null,
         progress: 0,
       },
@@ -198,6 +202,8 @@ export function useMultiplayerState(): UseMultiplayerState {
         name,
         score: 0,
         alive: true,
+        ready: false,
+        finished: false,
         sequence: null,
         progress: 0,
       }
@@ -243,6 +249,8 @@ export function useMultiplayerState(): UseMultiplayerState {
           name,
           score: 0,
           alive: true,
+          ready: false,
+          finished: false,
           sequence: generateSequence(4),
           progress: 0,
         }
@@ -272,6 +280,8 @@ export function useMultiplayerState(): UseMultiplayerState {
         name,
         score: 0,
         alive: true,
+        ready: false,
+        finished: false,
         sequence: generateSequence(4),
         progress: 0,
       }
@@ -475,10 +485,29 @@ export function useMultiplayerState(): UseMultiplayerState {
       localParticipantRef.current = participant
       if (isMultiplayerEnabled && supabase && channelRef.current) {
         void channelRef.current.track(participant)
+      } else {
+        // Mock mode (no backend): sync into lobby state so effects that monitor
+        // participants (e.g. all-finished detection, ready status) work locally.
+        setLobby((prev) => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            participants: prev.participants.map((p) =>
+              p.id === participant.id ? participant : p,
+            ),
+          }
+        })
       }
     },
     [isMultiplayerEnabled, supabase],
   )
+
+  const readyUp = useCallback(() => {
+    const participant = localParticipantRef.current
+    if (!participant) return
+    const updated = { ...participant, ready: !participant.ready }
+    trackLocal(updated)
+  }, [trackLocal])
 
   // End the round. Only the host persists standings and broadcasts gameover;
   // non-hosts simply stop (they'll receive the gameover phase via Realtime).
@@ -517,6 +546,7 @@ export function useMultiplayerState(): UseMultiplayerState {
     updateSettings,
     submitResults,
     trackLocal,
+    readyUp,
     endRound,
   }
 }

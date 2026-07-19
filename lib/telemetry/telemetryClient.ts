@@ -8,8 +8,8 @@
  * from the gameplay loop never blocks the main thread.
  */
 
-import { createEmptyTelemetry } from './telemetry'
-import type { Telemetry } from './telemetry'
+import { createEmptyTelemetry } from '.'
+import type { Telemetry } from '.'
 import type { TelemetryCommand, TelemetryEvent } from './telemetryProtocol'
 
 type SnapshotListener = (telemetry: Telemetry) => void
