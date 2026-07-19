@@ -7,6 +7,7 @@ import { GameEngine } from '../lib/game-engine'
 export interface UseSingleplayerState {
   state: EngineState
   start: (mode: EngineMode, limitSeconds: number, sequenceLength?: number) => void
+  startImmediate: (mode: EngineMode, limitSeconds: number, sequenceLength?: number) => void
   reset: () => void
   handleInput: (direction: QteDirection) => void
   telemetry: ReturnType<typeof useTelemetry>['telemetry']
@@ -44,6 +45,18 @@ export function useSingleplayerState(): UseSingleplayerState {
     engine.start()
   }
 
+  // Like `start`, but skips the prestart countdown and begins playing
+  // immediately. Used by multiplayer, where the lobby already ran its own
+  // prestart (CountdownScreen) before the playing phase begins.
+  const startImmediate = (mode: EngineMode, limitSeconds: number, sequenceLength?: number) => {
+    telemetry.start()
+    if (sequenceLength !== undefined) {
+      telemetry.setSequenceLength(sequenceLength)
+    }
+    engine.reconfigure(mode, limitSeconds, sequenceLength ?? 4)
+    engine.startImmediate()
+  }
+
   const reset = () => {
     engine.reset()
     telemetry.reset()
@@ -67,6 +80,7 @@ export function useSingleplayerState(): UseSingleplayerState {
   return {
     state: engine.state,
     start,
+    startImmediate,
     reset,
     handleInput,
     telemetry: telemetry.telemetry,
