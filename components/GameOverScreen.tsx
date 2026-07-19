@@ -2,7 +2,7 @@ import { PixelCard, PixelButton } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Play, Home } from '@pxlkit/ui'
 import type { SingleplayerState } from '../lib/types'
-import type { Telemetry } from '../lib/telemetry'
+import type { Telemetry } from '../lib/telemetry/telemetry'
 import TelemetryStats from './TelemetryStats'
 import TelemetryChart from './TelemetryChart'
 

@@ -1,4 +1,4 @@
-import type { Telemetry } from '../lib/telemetry'
+import type { Telemetry } from '../lib/telemetry/telemetry'
 
 interface TelemetryChartProps {
   telemetry: Telemetry

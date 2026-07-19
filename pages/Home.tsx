@@ -7,7 +7,7 @@ import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../hooks/useAuth'
-import { submitTelemetry } from '../lib/telemetrySubmission'
+import { submitTelemetry } from '../lib/telemetry/telemetrySubmission'
 import GameplayWindow from '../components/GameplayWindow'
 import GameOverScreen from '../components/GameOverScreen'
 import PrestartLobby from '../components/PrestartLobby'
@@ -49,7 +49,7 @@ function GameOverLeaderboard({
   code: string
   participants: import('../lib/types').MultiplayerParticipant[]
   variant?: import('../lib/types').MultiplayerVariant
-  telemetry: import('../lib/telemetry').Telemetry | null
+  telemetry: import('../lib/telemetry/telemetry').Telemetry | null
   onHome: () => void
 }) {
   const { rows } = useLeaderboard(code, participants)
@@ -81,7 +81,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false)
   // Local player's telemetry for the current multiplayer match, surfaced on the
   // results screen (not shown in-game). Reset when leaving the match.
-  const [multiTelemetry, setMultiTelemetry] = useState<import('../lib/telemetry').Telemetry | null>(null)
+  const [multiTelemetry, setMultiTelemetry] = useState<import('../lib/telemetry/telemetry').Telemetry | null>(null)
 
   // Share-link support: ?lobby=CODE drops the user straight into the join flow.
   useEffect(() => {
