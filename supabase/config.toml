@@ -29,10 +29,10 @@ port = 54324
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:5173"
+site_url = "https://redshift-qte-demo.urs.deno.net"
 additional_redirect_urls = [
-  "http://127.0.0.1:5173",
   "https://redshift-qte-demo.urs.deno.net",
+  "http://127.0.0.1:5173"
 ]
 jwt_expiry = 3600
 enable_signup = true
@@ -45,3 +45,7 @@ enabled = false
 # permits anon inserts. JWT verification must be off so the anonymous CORS
 # preflight (OPTIONS, no Authorization header) is not rejected by the gateway.
 verify_jwt = false
+
+# Match the free-tier remote (vector buckets require a paid plan).
+[vector]
+enabled = false
