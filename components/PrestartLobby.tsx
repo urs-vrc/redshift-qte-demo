@@ -28,6 +28,7 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [variant, setVariant] = useState<MultiplayerVariant>('score')
+  const [error, setError] = useState<string | null>(null)
 
   if (!enabled) {
     return (
@@ -84,7 +85,10 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
               tone="green"
               className="flex-1"
               disabled={!name}
-              onClick={() => onCreate(variant, name)}
+              onClick={() => {
+                setError(null)
+                void onCreate(variant, name)
+              }}
             >
               Create Lobby
             </PixelButton>
@@ -92,7 +96,10 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
             <div className="flex flex-1 gap-2">
               <PixelInput
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  setCode(e.target.value.toUpperCase())
+                  setError(null)
+                }}
                 placeholder="CODE"
                 maxLength={6}
                 className="w-24 flex-none text-center font-mono"
@@ -101,11 +108,20 @@ export default function PrestartLobby({ enabled, onCreate, onJoin, onBack }: Pre
                 tone="cyan"
                 className="flex-1"
                 disabled={!name || !code}
-                onClick={() => onJoin(code, name)}
+                onClick={() => {
+                  setError(null)
+                  void Promise.resolve(onJoin(code, name)).catch((e: unknown) =>
+                    setError(e instanceof Error ? e.message : 'Could not join lobby.'),
+                  )
+                }}
               >
                 Join
               </PixelButton>
             </div>
+
+            {error && (
+              <PixelAlert tone="red" label="Cannot join" message={error} />
+            )}
           </div>
 
           <div className="border-t border-retro-border/40 pt-4 flex justify-center">

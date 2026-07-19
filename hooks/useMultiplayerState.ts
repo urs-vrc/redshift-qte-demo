@@ -56,6 +56,13 @@ export function useMultiplayerState(): UseMultiplayerState {
         setLobby(newLobby)
         return
       }
+      const { error: insertError } = await supabase
+        .from('lobbies')
+        .insert({ code, host_id: newLobby.hostId, variant })
+      if (insertError) {
+        console.error('Failed to register lobby', insertError)
+        throw new Error('Could not create lobby. Please try again.')
+      }
       const channel = supabase.channel(`lobby:${code}`)
       channelRef.current = channel
       channel.on('presence', { event: 'sync' }, () => {
@@ -75,6 +82,7 @@ export function useMultiplayerState(): UseMultiplayerState {
     async (code: string, name: string) => {
       const normalized = code.toUpperCase()
       if (!isMultiplayerEnabled || !supabase) {
+        // Mock mode has no server to verify against, so allow local testing.
         const participant: MultiplayerParticipant = {
           id: `guest_${normalized}_${name}`,
           name,
@@ -87,6 +95,19 @@ export function useMultiplayerState(): UseMultiplayerState {
         newLobby.participants = [participant]
         setLobby(newLobby)
         return
+      }
+      // Invite-only: the lobby must exist (created and shared) before joining.
+      const { data: existing, error: lookupError } = await supabase
+        .from('lobbies')
+        .select('code')
+        .eq('code', normalized)
+        .maybeSingle()
+      if (lookupError) {
+        console.error('Failed to look up lobby', lookupError)
+        throw new Error('Could not verify lobby. Please try again.')
+      }
+      if (!existing) {
+        throw new Error('Lobby not found. Ask the host to share their invite link.')
       }
       const channel = supabase.channel(`lobby:${normalized}`)
       channelRef.current = channel
