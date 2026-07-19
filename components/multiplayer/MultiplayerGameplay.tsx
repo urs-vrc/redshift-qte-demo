@@ -17,6 +17,7 @@ import TelemetryChart from '../TelemetryChart'
 
 interface MultiplayerGameplayProps {
   lobby: Lobby
+  localParticipantId: string | null
   onLeave: () => void
 }
 
@@ -31,24 +32,6 @@ const ARROW: Record<QteDirection, ReactElement> = {
 }
 
 const DEFAULT_STEPS: QteDirection[] = ['up', 'right', 'down', 'down', 'down']
-
-function fillParticipants(participants: MultiplayerParticipant[]): MultiplayerParticipant[] {
-  const target = 10
-  const pool = ['Nova Rust', 'Turbo Finch', 'Axel Moon', 'Riven Byte', 'Cinder Vale']
-  const list = [...participants]
-  while (list.length < target) {
-    const i = list.length
-    list.push({
-      id: `placeholder-${i}`,
-      name: pool[i % pool.length],
-      score: 12500,
-      alive: i < 7,
-      sequence: { id: `mock-${i}`, steps: DEFAULT_STEPS },
-      progress: 0,
-    })
-  }
-  return list
-}
 
 /** Sidebar row per participant — matches MP.png layout */
 function ParticipantRow({ participant }: { participant: MultiplayerParticipant }) {
@@ -102,32 +85,26 @@ function ParticipantRow({ participant }: { participant: MultiplayerParticipant }
   )
 }
 
-export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGameplayProps) {
+export default function MultiplayerGameplay({ lobby, localParticipantId, onLeave }: MultiplayerGameplayProps) {
   const [localParticipant, setLocalParticipant] = useState<MultiplayerParticipant>(() => {
-    const orig = lobby.participants[0] || {
-      id: 'local-mock',
-      name: 'Nice Nature',
-      score: 0,
-      alive: true,
-      sequence: { id: 'initial', steps: DEFAULT_STEPS },
-      progress: 0,
-    }
+    const orig =
+      lobby.participants.find((p) => p.id === localParticipantId) ??
+      lobby.participants[0] ?? {
+        id: localParticipantId ?? 'local',
+        name: 'You',
+        score: 0,
+        alive: true,
+        sequence: { id: 'initial', steps: DEFAULT_STEPS },
+        progress: 0,
+      }
     return {
       ...orig,
       sequence: orig.sequence || { id: 'initial', steps: DEFAULT_STEPS },
     }
   })
 
-  const [opponents, setOpponents] = useState<MultiplayerParticipant[]>(() =>
-    fillParticipants(lobby.participants)
-      .slice(1)
-      .map((p, idx) => ({
-        ...p,
-        score: 12500 + idx * 100,
-        progress: Math.floor(Math.random() * 3),
-        sequence: p.sequence || { id: `opp-${idx}`, steps: DEFAULT_STEPS },
-      })),
-  )
+  // Real opponents are the other presence participants in the lobby.
+  const opponents = lobby.participants.filter((p) => p.id !== localParticipant.id)
 
   const [timeLeftMs, setTimeLeftMs] = useState(lobby.variant === 'elimination' ? 15000 : 30000)
   const [limitSeconds, setLimitSeconds] = useState(15)
@@ -142,31 +119,6 @@ export default function MultiplayerGameplay({ lobby, onLeave }: MultiplayerGamep
   }, [limitSeconds])
 
   const telemetry = useTelemetry()
-
-  // Simulate opponent progress
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOpponents((prev) =>
-        prev.map((opp) => {
-          if (!opp.alive) return opp
-          if (Math.random() > 0.6) {
-            const nextProgress = opp.progress + 1
-            if (nextProgress >= (opp.sequence?.steps.length ?? 5)) {
-              return {
-                ...opp,
-                progress: 0,
-                score: opp.score + Math.floor(Math.random() * 200) + 100,
-                sequence: { id: `seq-${Date.now()}-${opp.id}`, steps: generateSequence(5).steps },
-              }
-            }
-            return { ...opp, progress: nextProgress }
-          }
-          return opp
-        }),
-      )
-    }, 1500)
-    return () => clearInterval(interval)
-  }, [])
 
   // Match timer — decrements the local player's clock so mistake penalties stick.
   useEffect(() => {

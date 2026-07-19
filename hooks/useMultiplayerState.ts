@@ -13,6 +13,8 @@ export interface UseMultiplayerState {
   lobby: Lobby | null
   /** True when the current user is the host of the active lobby. */
   isHost: boolean
+  /** Id of the local participant within the active lobby, if joined. */
+  localParticipantId: string | null
   createLobby: (variant: MultiplayerVariant, name: string) => Promise<void>
   joinLobby: (code: string, name: string) => Promise<void>
   leaveLobby: () => void
@@ -46,6 +48,7 @@ function emptyLobby(code: string, hostName: string, variant: MultiplayerVariant,
 export function useMultiplayerState(): UseMultiplayerState {
   const [lobby, setLobby] = useState<Lobby | null>(null)
   const [isHost, setIsHost] = useState(false)
+  const [localParticipantId, setLocalParticipantId] = useState<string | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const hostIdRef = useRef<string | null>(null)
 
@@ -107,6 +110,7 @@ export function useMultiplayerState(): UseMultiplayerState {
       )
       await channel.subscribe()
       setIsHost(true)
+      setLocalParticipantId(hostId)
       setLobby(newLobby)
     },
     [applyLobbyRow],
@@ -167,6 +171,7 @@ export function useMultiplayerState(): UseMultiplayerState {
       await channel.subscribe()
       void channel.track(participant)
       setIsHost(false)
+      setLocalParticipantId(participant.id)
       setLobby((prev) =>
         prev
           ? { ...prev, participants: [...prev.participants, participant] }
@@ -258,14 +263,15 @@ export function useMultiplayerState(): UseMultiplayerState {
 
   useEffect(() => teardown, [teardown])
 
-  // Default mockup mode to true for local testing without Supabase, as requested.
-  // Can be controlled via VITE_MOCK_MODE environment variable.
-  const isMockMode = import.meta.env.VITE_MOCK_MODE !== 'false'
+  // Multiplayer is enabled only when a real Supabase backend is configured.
+  // Set VITE_MOCK_MODE=true to force-enable the UI without a backend (mock data).
+  const isMockMode = import.meta.env.VITE_MOCK_MODE === 'true'
 
   return {
     enabled: isMockMode || isMultiplayerEnabled,
     lobby,
     isHost,
+    localParticipantId,
     createLobby,
     joinLobby,
     leaveLobby,

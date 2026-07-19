@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PixelButton, PixelSegmented, PixelAvatar, PixelBadge, PixelAlert, PixelModal, PixelSelect } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall, Home as HomeIcon } from '@pxlkit/ui'
-import type { GameMode, MultiplayerParticipant, MultiplayerVariant } from '../lib/types'
+import type { GameMode, MultiplayerVariant } from '../lib/types'
 import { useSingleplayerState } from '../hooks/useSingleplayerState'
 import { useMultiplayerState } from '../hooks/useMultiplayerState'
 import { useAuth } from '../hooks/useAuth'
@@ -39,15 +39,6 @@ const LENGTH_OPTIONS = [
   { value: '4', label: '4-combo' },
   { value: '6', label: '6-combo' },
   { value: '8', label: '8-combo' },
-]
-
-const DEMO_NAME_POOL = [
-  'Nice Nature',
-  'Nova Rust',
-  'Turbo Finch',
-  'Axel Moon',
-  'Riven Byte',
-  'Cinder Vale',
 ]
 
 export default function Home() {
@@ -187,6 +178,7 @@ export default function Home() {
       return (
         <MultiplayerGameplay
           lobby={multi.lobby}
+          localParticipantId={multi.localParticipantId}
           onLeave={() => {
             multi.leaveLobby()
             setScreen('menu')
@@ -196,22 +188,7 @@ export default function Home() {
     }
 
     if (multi.lobby) {
-      const requiredSlots = 6 * 3
-      const slots: Array<MultiplayerParticipant & { isGhost?: boolean }> = [
-        ...multi.lobby.participants,
-      ]
-      while (slots.length < requiredSlots) {
-        const i = slots.length
-        slots.push({
-          id: `ghost-${i}`,
-          name: DEMO_NAME_POOL[i % DEMO_NAME_POOL.length],
-          score: 0,
-          alive: i % 4 !== 0,
-          sequence: null,
-          progress: 0,
-          isGhost: true,
-        })
-      }
+      const participants = multi.lobby.participants
 
       return (
         <>
@@ -245,15 +222,12 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {slots.map((participant, i) => {
-                const isReady = participant.alive && i % 3 !== 0
+              {participants.map((participant) => {
+                const isReady = participant.alive
                 return (
                   <div
                     key={participant.id}
-                    className={[
-                      'flex items-center justify-between gap-2 rounded-full border border-retro-border/60 bg-retro-bg px-3 py-1.5',
-                      (participant as any).isGhost ? 'opacity-60' : '',
-                    ].join(' ')}
+                    className="flex items-center justify-between gap-2 rounded-full border border-retro-border/60 bg-retro-bg px-3 py-1.5"
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <PixelAvatar
