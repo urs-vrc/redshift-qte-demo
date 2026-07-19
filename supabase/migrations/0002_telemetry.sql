@@ -44,3 +44,11 @@ alter table public.telemetry enable row level security;
 
 create policy "anon insert telemetry" on public.telemetry
   for insert to anon with check (true);
+
+-- Allow anon to read back rows it inserts (needed when clients request
+-- return=representation). No aggregate/export access is granted elsewhere.
+create policy "anon read telemetry" on public.telemetry
+  for select to anon using (true);
+
+-- RLS permits anon inserts, but the role still needs the underlying privilege.
+grant insert, select on table public.telemetry to anon, authenticated;

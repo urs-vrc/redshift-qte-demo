@@ -65,3 +65,8 @@ create policy "anon update participants" on public.lobby_participants
 
 create policy "anon delete participants" on public.lobby_participants
   for delete to anon using (true);
+
+-- RLS policies alone don't grant table privileges; the anon/authenticated
+-- roles still need explicit GRANTs to actually read/write these tables.
+grant select, insert, update, delete on table public.lobbies to anon, authenticated;
+grant select, insert, update, delete on table public.lobby_participants to anon, authenticated;
