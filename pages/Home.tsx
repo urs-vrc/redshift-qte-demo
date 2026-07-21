@@ -85,7 +85,6 @@ export default function Home() {
   const multi = useMultiplayerState()
   const auth = useAuth()
 
-  const [multiPrestartTimeLeft, setMultiPrestartTimeLeft] = useState(9000)
   // Match-settings dialog: used both for configuring a freshly created lobby
   // and for the host to edit settings later. `dialogMode` distinguishes intent.
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
@@ -123,20 +122,6 @@ export default function Home() {
       telemetrySubmittedRef.current = false
     }
   }, [screen, single.state.phase, single.state.mode, single.state.score, single.telemetry])
-
-  useEffect(() => {
-    if (multi.lobby?.phase === 'prestart') {
-      setMultiPrestartTimeLeft(9000)
-      const start = Date.now()
-      const interval = setInterval(() => {
-        const elapsed = Date.now() - start
-        const remaining = Math.max(0, 9000 - elapsed)
-        setMultiPrestartTimeLeft(remaining)
-        if (remaining <= 0) clearInterval(interval)
-      }, 50)
-      return () => clearInterval(interval)
-    }
-  }, [multi.lobby?.phase])
 
   // ── SINGLEPLAYER ──────────────────────────────────────────────────────────
   if (screen === 'single') {
@@ -203,7 +188,7 @@ export default function Home() {
     if (multi.lobby && multi.lobby.phase === 'prestart') {
       return (
         <CountdownScreen
-          timeLeftMs={multiPrestartTimeLeft}
+          timeLeftMs={multi.prestartTimeLeftMs}
           mode={
             multi.lobby.variant === 'score'
               ? 'score'

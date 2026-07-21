@@ -56,4 +56,12 @@ The QTE also includes a multiplayer mode, which allows players to compete agains
 
 - Timer Mode is a "score" mode, where players will compete to see who can complete the most sequences in the time limit. The player with the highest score at the end of the timer wins the game. In the "reaction" mode, you win by whoever completes the sequence first.
 
-I might include a leaderboard system in the future but that depends if people will play this beyond the scope of a demo for a larger project. Some parts of the multiplayer mode are exclusive to the browser version.
+#### Architecture (Client-Authoritative)
+
+The multiplayer implementation features a robust, client-authoritative, single-channel architecture:
+
+- **Client-Authoritative Model**: Clients remain the sole source of truth for all local gameplay and scoring. Each client runs the singleplayer engine (`useSingleplayerState`) locally, and computes round-end, elimination, and win states locally using pure deterministic functions (`getDerivedMatchState`).
+- **Single Presence Channel**: All active live gameplay syncing is consolidated onto a single Supabase Realtime Presence channel (`lobby:${CODE}`).
+- **Minimalist Roster Heartbeat**: The DB roster table (`lobby_participants`) is used strictly for liveness detection (heartbeat) and server-reconciled host migration. It does not duplicate live gameplay state.
+- **Deterministic Host Migration**: Stale-heartbeat pruning and earliest-joiner promotion are handled strictly server-side by database-level server reconciliation. This deterministic reconciliation is run periodically by `pg_cron`. For local development, `pg_cron` runs inside the local Dockerized Supabase stack (started via `supabase start`).
+- **Adapter Interface**: All multiplayer interactions are decoupled via a unified `MultiplayerBackend` adapter pattern (supporting both `SupabaseMultiplayerBackend` and `MockMultiplayerBackend`), allowing the frontend code to remain identical between mock and real modes.

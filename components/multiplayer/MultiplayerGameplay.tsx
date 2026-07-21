@@ -1,15 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { PixelAvatar, PixelCard } from '@pxlkit/ui-kit'
 import { PxlKitIcon } from '@pxlkit/core'
 import { Clock, SparkleSmall } from '@pxlkit/ui'
 import type { ReactElement } from 'react'
-import type { Lobby, MultiplayerParticipant, QteDirection } from '../../lib/game-engine'
 import {
-  isPlayerEliminated,
-  shouldEndTimerRound,
-  hasLocalPlayerWonElimination,
-  shouldEndEliminationRound,
-  buildParticipant,
+  getDerivedMatchState,
+  type Lobby,
+  type MultiplayerParticipant,
+  type QteDirection,
 } from '../../lib/game-engine'
 import { useSingleplayerState } from '../../hooks/useSingleplayerState'
 import type { Telemetry } from '../../lib/telemetry'
@@ -35,18 +33,6 @@ interface MultiplayerGameplayProps {
   onTelemetry?: (telemetry: Telemetry) => void
 }
 
-/**
- * Multiplayer gameplay, built directly on top of the singleplayer engine.
- *
- * Instead of re-implementing the game loop, this component reuses
- * `useSingleplayerState` — the exact same hook singleplayer uses — so the local
- * player's input handling, endless mistake penalty, and sequence-completion
- * ramp are byte-for-byte identical to solo play. The only multiplayer-specific
- * concerns layered on top are:
- *   - syncing the local engine state into presence (`trackLocal`),
- *   - the elimination win/lose bookkeeping (`alive`/`finished` flags),
- *   - ending the round when everyone is done / the local player is last standing.
- */
 export default function MultiplayerGameplay({
   lobby,
   localParticipantId,
@@ -55,153 +41,61 @@ export default function MultiplayerGameplay({
   endRound,
   onTelemetry,
 }: MultiplayerGameplayProps) {
-  // The singleplayer engine is the single source of truth for local gameplay.
   const single = useSingleplayerState()
 
   const isElimination = lobby.variant === 'elimination'
   const engineMode = isElimination ? 'endless' : 'timer'
 
-  const eliminatedRef = useRef(false)
-  const endedRef = useRef(false)
-  // Local player's display name, captured once at match start so the presence
-  // sync effect doesn't need to depend on lobby.participants (which it writes
-  // back into, causing a render loop).
-  const localNameRef = useRef('You')
+  const localName = lobby.participants.find((p) => p.id === localParticipantId)?.name ?? 'You'
 
-  // Real opponents are the other lobby participants.
-  const opponents = lobby.participants.filter((p) => p.id !== localParticipantId)
-
-  // ── Drive the engine from the lobby lifecycle ────────────────────────────
-  // Start the local engine when the lobby transitions into the playing phase.
-  // We reuse the singleplayer `startImmediate()` so the prestart/playing flow,
-  // the endless ramp, and the mistake penalty are all identical to solo play —
-  // but WITHOUT a second prestart countdown, since the lobby already ran its
-  // own prestart (CountdownScreen) before reaching the playing phase.
-  useEffect(() => {
-    if (lobby.phase !== 'playing') return
-    if (endedRef.current) return
-    eliminatedRef.current = false
-    localNameRef.current = lobby.participants.find((p) => p.id === localParticipantId)?.name ?? 'You'
-    single.startImmediate(engineMode, isElimination ? 15 : lobby.windowSeconds, lobby.sequenceLength)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lobby.phase, lobby.code])
-
-  // ── Mirror the engine state into presence ────────────────────────────────
-  // This is the ONLY gameplay divergence from singleplayer: we broadcast the
-  // local player's live engine state so opponents can see it. The engine
-  // itself is untouched.
-  useEffect(() => {
-    const state = single.state
-    if (state.phase !== 'playing') return
-    const updated = buildParticipant(state, localParticipantId, localNameRef.current, lobby.variant)
-    trackLocal(updated, false)
-    // NOTE: intentionally NOT depending on `lobby.participants`. `trackLocal`
-    // writes back into lobby.participants (mock mode) or triggers a presence
-    // sync that rewrites it (real mode); depending on it would re-run this
-    // effect every tick and cause an infinite render loop. The name is captured
-    // once at match start via localNameRef.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    single.state.phase,
-    single.state.score,
-    single.state.sequence?.id,
-    single.state.progress,
-    localParticipantId,
-    trackLocal,
-    lobby.variant,
-  ])
-
-  // ── Elimination: local player eliminated when their engine ends ──────────
-  useEffect(() => {
-    if (!isElimination) return
-    if (isPlayerEliminated(single.state, lobby.variant) && !eliminatedRef.current) {
-      eliminatedRef.current = true
-      // Broadcast the final dead state so opponents see the elimination.
-      const updated = buildParticipant(single.state, localParticipantId, localNameRef.current, lobby.variant)
-      trackLocal(updated, true)
-      onTelemetry?.(single.telemetry)
-
-      if (shouldEndEliminationRound(lobby.participants, localParticipantId) && !endedRef.current) {
-        endedRef.current = true
-        void endRound()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    single.state.phase,
-    isElimination,
-    single.telemetry,
-    single.state.score,
-    single.state.sequence,
-    single.state.progress,
-    localParticipantId,
-    trackLocal,
-    onTelemetry,
+  // Centralize all match state rules into a single pure selector
+  const {
+    isLocalPlayerEliminated,
+    isLocalPlayerFinished,
+    isRoundOver,
+    displayParticipants,
+    playersRemaining,
+  } = getDerivedMatchState(
+    lobby.phase,
     lobby.variant,
     lobby.participants,
-    endRound,
-  ])
+    localParticipantId,
+    single.state,
+    localName
+  )
 
-  // ── Timer-like variants: end the round when the local clock runs out ─────
+  // Start the local engine when the lobby transitions into playing
   useEffect(() => {
-    if (isElimination) return
-    if (single.state.phase === 'gameover' && !endedRef.current) {
-      endedRef.current = true
-      // Broadcast the final finished state so opponents/host see completion.
-      const updated = buildParticipant(single.state, localParticipantId, localNameRef.current, lobby.variant)
-      trackLocal(updated, true)
+    if (lobby.phase !== 'playing') return
+    single.startImmediate(engineMode, isElimination ? 15 : lobby.windowSeconds, lobby.sequenceLength)
+  }, [lobby.phase, lobby.code, lobby.windowSeconds, lobby.sequenceLength, engineMode, isElimination])
+
+  // Mirror the local engine state into presence
+  const localParticipantState = displayParticipants.find((p) => p.id === (localParticipantId ?? 'local'))
+
+  useEffect(() => {
+    if (lobby.phase !== 'playing' || !localParticipantState) return
+    const isCritical = localParticipantState.finished || !localParticipantState.alive
+    trackLocal(localParticipantState, isCritical)
+  }, [localParticipantState, lobby.phase, trackLocal])
+
+  // Submit telemetry on game over / round end
+  useEffect(() => {
+    if (isLocalPlayerFinished) {
       onTelemetry?.(single.telemetry)
+    }
+  }, [isLocalPlayerFinished, onTelemetry, single.telemetry])
+
+  // End the round locally once the selector determines the round is over
+  useEffect(() => {
+    if (isRoundOver) {
       void endRound()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [single.state.phase, isElimination, endRound, single.telemetry, single.state.score, single.state.sequence, single.state.progress, localParticipantId, trackLocal, onTelemetry, lobby.variant])
+  }, [isRoundOver, endRound])
 
-  // ── Timer-like variants: end the round when ALL participants are done ────
-  useEffect(() => {
-    if (lobby.phase !== 'playing' || isElimination) return
-    if (shouldEndTimerRound(lobby.participants) && !endedRef.current) {
-      endedRef.current = true
-      void endRound()
-    }
-  }, [lobby.phase, lobby.variant, lobby.participants, isElimination, endRound])
-
-  // ── Elimination: local player wins when last one standing ────────────────
-  useEffect(() => {
-    if (lobby.phase !== 'playing' || !isElimination || eliminatedRef.current) return
-
-    const localDisplay = buildParticipant(single.state, localParticipantId, localNameRef.current, lobby.variant)
-    const opponents = lobby.participants.filter((p) => p.id !== localParticipantId)
-    const displayParticipants = [localDisplay, ...opponents]
-
-    if (hasLocalPlayerWonElimination(displayParticipants, localParticipantId) && !endedRef.current) {
-      endedRef.current = true
-      onTelemetry?.(single.telemetry)
-      void endRound()
-    }
-  }, [lobby.phase, lobby.variant, localParticipantId, lobby.participants, isElimination, single.telemetry, single.state, endRound, onTelemetry])
-
-  // Reset the ended flag when a new lobby/round starts.
-  useEffect(() => {
-    if (lobby.phase !== 'playing') endedRef.current = false
-  }, [lobby.phase, lobby.code])
-
-  // Keyboard input is already handled by useSingleplayerState's own listener,
-  // which delegates straight to the engine — so we don't add a second one.
-
-  // ── Derived display values ──────────────────────────────────────────────
+  // Derived display values
   const state = single.state
   const activeSequence = state.sequence?.steps ?? DEFAULT_STEPS
-  const eliminated = isPlayerEliminated(state, lobby.variant)
-
-  // The local player's row is driven directly by the live engine state
-  // (single.state) so it updates in real time without depending on the
-  // presence round-trip. Opponents come from lobby presence (lobby.participants).
-  const localDisplay = buildParticipant(state, localParticipantId, localNameRef.current, lobby.variant)
-  const displayParticipants = [localDisplay, ...opponents]
-
-  const playersRemaining = isElimination
-    ? (localDisplay.alive ? 1 : 0) + opponents.filter((o) => o.alive).length
-    : (localDisplay.finished ? 0 : 1) + opponents.filter((o) => !o.finished).length
 
   const clockDenominator = isElimination ? state.limitSeconds * 1000 : lobby.windowSeconds * 1000
   const pct = Math.max(0, Math.min(100, (state.timeLeftMs / clockDenominator) * 100))
@@ -213,7 +107,6 @@ export default function MultiplayerGameplay({
     return `${mins.toString().padStart(2, '0')}:${secs.padStart(4, '0')}`
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <main className="flex min-h-screen flex-col md:flex-row">
       {/* Sidebar */}
@@ -303,14 +196,14 @@ export default function MultiplayerGameplay({
         </div>
 
         {/* On-screen D-pad */}
-        <Dpad onInput={single.handleInput} disabled={eliminated || state.phase !== 'playing'} />
+        <Dpad onInput={single.handleInput} disabled={isLocalPlayerEliminated || state.phase !== 'playing'} />
 
-        {eliminated && (
+        {isLocalPlayerEliminated && (
           <p className="font-pixel text-center text-sm text-red-400">
             You were eliminated! Hang tight — the match ends when everyone finishes.
           </p>
         )}
-        {!eliminated && state.phase === 'gameover' && !isElimination && (
+        {!isLocalPlayerEliminated && state.phase === 'gameover' && !isElimination && (
           <p className="font-pixel text-center text-sm text-retro-muted">
             You're done! Waiting for others to finish...
           </p>

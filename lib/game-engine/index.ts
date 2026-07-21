@@ -20,6 +20,7 @@ export {
   hasLocalPlayerWonElimination,
   shouldEndEliminationRound,
   buildParticipant,
+  getDerivedMatchState,
 } from './match'
 export {
   generateSequence,

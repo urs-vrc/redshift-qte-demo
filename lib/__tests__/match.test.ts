@@ -6,9 +6,10 @@ import {
   hasLocalPlayerWonElimination,
   shouldEndEliminationRound,
   buildParticipant,
+  getDerivedMatchState,
 } from '../game-engine'
 
-const mockState = (phase: EngineState['phase']): EngineState => ({
+const mockState = (phase: EngineState['phase'], custom: Partial<EngineState> = {}): EngineState => ({
   phase,
   mode: 'timer',
   score: 42,
@@ -19,6 +20,7 @@ const mockState = (phase: EngineState['phase']): EngineState => ({
   prestartTimeLeftMs: 0,
   elapsedMs: 1500,
   failed: false,
+  ...custom,
 })
 
 describe('isPlayerEliminated', () => {
@@ -171,6 +173,72 @@ describe('buildParticipant', () => {
       finished: true,
       sequence: state.sequence,
       progress: 1,
+    })
+  })
+})
+
+describe('getDerivedMatchState', () => {
+  describe('elimination variant', () => {
+    it('solo lobby: round ends when local player is eliminated', () => {
+      const statePlaying = mockState('playing')
+      const mPlaying = getDerivedMatchState('playing', 'elimination', [], 'local', statePlaying, 'Alice')
+      expect(mPlaying.isLocalPlayerEliminated).toBe(false)
+      expect(mPlaying.isRoundOver).toBe(false)
+
+      const stateGameOver = mockState('gameover')
+      const mOver = getDerivedMatchState('playing', 'elimination', [], 'local', stateGameOver, 'Alice')
+      expect(mOver.isLocalPlayerEliminated).toBe(true)
+      expect(mOver.isRoundOver).toBe(true)
+    })
+
+    it('multiplayer lobby: local player wins when they are the last one standing', () => {
+      const opponents = [
+        { id: '2', name: 'Bob', score: 10, alive: false, ready: true, finished: true, sequence: null, progress: 0 },
+      ]
+      const statePlaying = mockState('playing')
+      const mState = getDerivedMatchState('playing', 'elimination', opponents, 'local', statePlaying, 'Alice')
+      expect(mState.isLocalPlayerEliminated).toBe(false)
+      expect(mState.hasLocalPlayerWon).toBe(true)
+      expect(mState.isRoundOver).toBe(true)
+    })
+
+    it('multiplayer lobby: local player is dead but opponents are still alive (spectating)', () => {
+      const opponents = [
+        { id: '2', name: 'Bob', score: 10, alive: true, ready: true, finished: false, sequence: null, progress: 0 },
+      ]
+      const stateGameOver = mockState('gameover')
+      const mState = getDerivedMatchState('playing', 'elimination', opponents, 'local', stateGameOver, 'Alice')
+      expect(mState.isLocalPlayerEliminated).toBe(true)
+      expect(mState.hasLocalPlayerWon).toBe(false)
+      expect(mState.isRoundOver).toBe(false) // Wait until Bob is dead
+    })
+
+    it('multiplayer lobby: local player is dead and all opponents also die', () => {
+      const opponents = [
+        { id: '2', name: 'Bob', score: 10, alive: false, ready: true, finished: true, sequence: null, progress: 0 },
+      ]
+      const stateGameOver = mockState('gameover')
+      const mState = getDerivedMatchState('playing', 'elimination', opponents, 'local', stateGameOver, 'Alice')
+      expect(mState.isLocalPlayerEliminated).toBe(true)
+      expect(mState.hasLocalPlayerWon).toBe(false)
+      expect(mState.isRoundOver).toBe(true) // Bob is dead too, round over
+    })
+  })
+
+  describe('score/reaction variants', () => {
+    it('round ends only when all participants are finished', () => {
+      const opponents = [
+        { id: '2', name: 'Bob', score: 10, alive: true, ready: true, finished: false, sequence: null, progress: 0 },
+      ]
+      const stateGameOver = mockState('gameover')
+      const mStatePending = getDerivedMatchState('playing', 'score', opponents, 'local', stateGameOver, 'Alice')
+      expect(mStatePending.isRoundOver).toBe(false) // Bob still playing
+
+      const opponentsFinished = [
+        { id: '2', name: 'Bob', score: 10, alive: true, ready: true, finished: true, sequence: null, progress: 0 },
+      ]
+      const mStateFinished = getDerivedMatchState('playing', 'score', opponentsFinished, 'local', stateGameOver, 'Alice')
+      expect(mStateFinished.isRoundOver).toBe(true) // Bob and Alice are finished
     })
   })
 })

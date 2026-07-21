@@ -72,3 +72,90 @@ export function buildParticipant(
     progress: state.progress,
   }
 }
+
+export interface DerivedMatchState {
+  isLocalPlayerEliminated: boolean
+  isLocalPlayerFinished: boolean
+  isRoundOver: boolean
+  hasLocalPlayerWon: boolean
+  displayParticipants: MultiplayerParticipant[]
+  playersRemaining: number
+}
+
+/**
+ * Computes the unified derived match state for a multiplayer round.
+ * Centralizes all round-end, elimination, and win conditions into a single selector.
+ */
+export function getDerivedMatchState(
+  lobbyPhase: string,
+  variant: MultiplayerVariant,
+  participants: MultiplayerParticipant[],
+  localParticipantId: string | null,
+  localEngineState: EngineState | null,
+  localName: string
+): DerivedMatchState {
+  const localId = localParticipantId ?? 'local'
+
+  // Build local participant state
+  const localParticipant = localEngineState
+    ? buildParticipant(localEngineState, localId, localName, variant)
+    : {
+        id: localId,
+        name: localName,
+        score: 0,
+        alive: true,
+        ready: true,
+        finished: false,
+        sequence: null,
+        progress: 0,
+      }
+
+  // Filter opponents
+  const opponents = participants.filter((p) => p.id !== localId)
+
+  // Merge so the local player's state is always direct and up-to-date
+  const displayParticipants = [localParticipant, ...opponents]
+
+  const isLocalPlayerEliminated = variant === 'elimination' && !localParticipant.alive
+  const isLocalPlayerFinished = localParticipant.finished
+
+  let isRoundOver = false
+  let hasLocalPlayerWon = false
+
+  if (lobbyPhase === 'playing') {
+    if (variant === 'elimination') {
+      const aliveOpponents = opponents.filter((p) => p.alive)
+      const hasOpponents = opponents.length > 0
+
+      if (hasOpponents) {
+        if (localParticipant.alive && aliveOpponents.length === 0) {
+          hasLocalPlayerWon = true
+          isRoundOver = true
+        } else if (!localParticipant.alive && aliveOpponents.length === 0) {
+          isRoundOver = true
+        }
+      } else {
+        // Solo lobby in elimination variant: ends when the player dies
+        if (!localParticipant.alive) {
+          isRoundOver = true
+        }
+      }
+    } else {
+      // Timer-like variants: score and reaction. Ends when ALL participants are finished.
+      isRoundOver = displayParticipants.length > 0 && displayParticipants.every((p) => p.finished)
+    }
+  }
+
+  const playersRemaining = variant === 'elimination'
+    ? displayParticipants.filter((p) => p.alive).length
+    : displayParticipants.filter((p) => !p.finished).length
+
+  return {
+    isLocalPlayerEliminated,
+    isLocalPlayerFinished,
+    isRoundOver,
+    hasLocalPlayerWon,
+    displayParticipants,
+    playersRemaining,
+  }
+}
