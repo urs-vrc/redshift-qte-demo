@@ -188,6 +188,7 @@ export class GameEngine {
         limitSeconds: nextLimitSeconds,
       }
       this.state = updated
+      console.log('Sequence completed, new ID:', nextSeq.id)
       this.callbacks.onSequenceComplete?.(newScore)
       this.callbacks.onStateChange?.(updated)
       return

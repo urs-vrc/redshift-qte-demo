@@ -94,10 +94,11 @@ export default function MultiplayerGameplay({
       score: state.score,
       alive: !eliminated,
       ready: true,
-      finished: eliminated,
+      finished: eliminated || state.phase === 'gameover',
       sequence: state.sequence,
       progress: state.progress,
     }
+    console.log('Syncing state:', updated.sequence?.id)
     trackLocal(updated, false)
     // NOTE: intentionally NOT depending on `lobby.participants`. `trackLocal`
     // writes back into lobby.participants (mock mode) or triggers a presence
