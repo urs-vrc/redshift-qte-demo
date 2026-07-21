@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { EngineMode, QteDirection, EngineState } from '../lib/game-engine'
-import { keyToDirection } from '../lib/game-engine/input'
 import { useTelemetry } from './useTelemetry'
 import { GameEngine } from '../lib/game-engine'
 
@@ -69,13 +68,9 @@ export function useSingleplayerState(): UseSingleplayerState {
   }, [engine])
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const direction = keyToDirection(e.key)
-      if (direction) handleInput(direction)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [handleInput])
+    engine.initInput()
+    return () => engine.destroyInput()
+  }, [engine])
 
   return {
     state: engine.state,

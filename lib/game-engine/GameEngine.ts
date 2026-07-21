@@ -198,6 +198,43 @@ export class GameEngine {
     this.callbacks.onStateChange?.(next)
   }
 
+  /** Initialize keyboard input listeners. */
+  initInput(): void {
+    const onKey = (e: KeyboardEvent) => {
+      const direction = this.keyToDirection(e.key)
+      if (direction) this.handleInput(direction)
+    }
+    window.addEventListener('keydown', onKey)
+    this.cleanupInput = () => window.removeEventListener('keydown', onKey)
+  }
+
+  /** Clean up keyboard input listeners. */
+  destroyInput(): void {
+    this.cleanupInput?.()
+    this.cleanupInput = undefined
+  }
+
+  private keyToDirection(key: string): QteDirection | null {
+    switch (key) {
+      case 'ArrowUp':
+      case 'w':
+        return 'up'
+      case 'ArrowDown':
+      case 's':
+        return 'down'
+      case 'ArrowLeft':
+      case 'a':
+        return 'left'
+      case 'ArrowRight':
+      case 'd':
+        return 'right'
+      default:
+        return null
+    }
+  }
+
+  private cleanupInput?: () => void
+
   /** Advance the clock by `delta` ms, handling phase transitions. */
   tick(delta: number): void {
     if (this.state.phase === 'prestart') {

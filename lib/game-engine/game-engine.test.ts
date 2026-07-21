@@ -10,7 +10,7 @@ describe('GameEngine Sequence Sync', () => {
       baseLength: 1, // 1-length sequence
     })
 
-    engine.startImmediate('timer', 5, 1)
+    engine.startImmediate()
     const initialSeqId = engine.state.sequence?.id
     expect(initialSeqId).toBeDefined()
 
