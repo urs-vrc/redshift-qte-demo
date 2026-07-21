@@ -187,9 +187,21 @@ export function useMultiplayerState(): UseMultiplayerState {
       const code = Math.random().toString(36).slice(2, 7).toUpperCase()
       const hostId = `host_${code}`
       hostIdRef.current = hostId
+      const hostParticipant: MultiplayerParticipant = {
+        id: hostId,
+        name,
+        score: 0,
+        alive: true,
+        ready: false,
+        finished: false,
+        sequence: null,
+        progress: 0,
+      }
+      localParticipantRef.current = hostParticipant
       const newLobby = emptyLobby(code, name, variant, hostId, windowSeconds, sequenceLength)
       if (!isMultiplayerEnabled || !supabase) {
         setIsHost(true)
+        setLocalParticipantId(hostId)
         setLobby(newLobby)
         return
       }
@@ -207,17 +219,6 @@ export function useMultiplayerState(): UseMultiplayerState {
       newLobby.code = realCode
       const channel = supabase.channel(`lobby:${realCode}`)
       channelRef.current = channel
-      const hostParticipant: MultiplayerParticipant = {
-        id: hostId,
-        name,
-        score: 0,
-        alive: true,
-        ready: false,
-        finished: false,
-        sequence: null,
-        progress: 0,
-      }
-      localParticipantRef.current = hostParticipant
       channel.on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<MultiplayerParticipant>()
         const participants = Object.values(state).flat()
@@ -253,20 +254,22 @@ export function useMultiplayerState(): UseMultiplayerState {
   const joinLobby = useCallback(
     async (code: string, name: string) => {
       const normalized = code.toUpperCase()
-      if (!isMultiplayerEnabled || !supabase) {
-        const participant: MultiplayerParticipant = {
-          id: `guest_${normalized}_${name}`,
-          name,
-          score: 0,
-          alive: true,
-          ready: false,
-          finished: false,
+      const participant: MultiplayerParticipant = {
+        id: `guest_${normalized}_${name}`,
+        name,
+        score: 0,
+        alive: true,
+        ready: false,
+        finished: false,
         sequence: null,
-          progress: 0,
-        }
+        progress: 0,
+      }
+      localParticipantRef.current = participant
+      if (!isMultiplayerEnabled || !supabase) {
         const newLobby = emptyLobby(normalized, name, 'score', `host_${normalized}`)
         newLobby.participants = [participant]
         setIsHost(false)
+        setLocalParticipantId(participant.id)
         setLobby(newLobby)
         return
       }
@@ -285,17 +288,6 @@ export function useMultiplayerState(): UseMultiplayerState {
       }
       const channel = supabase.channel(`lobby:${normalized}`)
       channelRef.current = channel
-      const participant: MultiplayerParticipant = {
-        id: `guest_${normalized}_${name}`,
-        name,
-        score: 0,
-        alive: true,
-        ready: false,
-        finished: false,
-        sequence: null,
-        progress: 0,
-      }
-      localParticipantRef.current = participant
       channel.on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<MultiplayerParticipant>()
         const participants = Object.values(state).flat()

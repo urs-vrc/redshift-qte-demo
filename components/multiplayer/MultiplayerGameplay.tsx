@@ -8,6 +8,7 @@ import {
   isPlayerEliminated,
   shouldEndTimerRound,
   hasLocalPlayerWonElimination,
+  shouldEndEliminationRound,
   buildParticipant,
 } from '../../lib/game-engine'
 import { useSingleplayerState } from '../../hooks/useSingleplayerState'
@@ -93,7 +94,6 @@ export default function MultiplayerGameplay({
     const state = single.state
     if (state.phase !== 'playing') return
     const updated = buildParticipant(state, localParticipantId, localNameRef.current, lobby.variant)
-    console.log('Syncing state:', updated.sequence?.id)
     trackLocal(updated, false)
     // NOTE: intentionally NOT depending on `lobby.participants`. `trackLocal`
     // writes back into lobby.participants (mock mode) or triggers a presence
@@ -120,9 +120,27 @@ export default function MultiplayerGameplay({
       const updated = buildParticipant(single.state, localParticipantId, localNameRef.current, lobby.variant)
       trackLocal(updated, true)
       onTelemetry?.(single.telemetry)
+
+      if (shouldEndEliminationRound(lobby.participants, localParticipantId) && !endedRef.current) {
+        endedRef.current = true
+        void endRound()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [single.state.phase, isElimination, single.telemetry, single.state.score, single.state.sequence, single.state.progress, localParticipantId, trackLocal, onTelemetry, lobby.variant])
+  }, [
+    single.state.phase,
+    isElimination,
+    single.telemetry,
+    single.state.score,
+    single.state.sequence,
+    single.state.progress,
+    localParticipantId,
+    trackLocal,
+    onTelemetry,
+    lobby.variant,
+    lobby.participants,
+    endRound,
+  ])
 
   // ── Timer-like variants: end the round when the local clock runs out ─────
   useEffect(() => {

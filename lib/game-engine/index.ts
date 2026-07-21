@@ -18,6 +18,7 @@ export {
   isPlayerEliminated,
   shouldEndTimerRound,
   hasLocalPlayerWonElimination,
+  shouldEndEliminationRound,
   buildParticipant,
 } from './match'
 export {

@@ -200,7 +200,7 @@ export class GameEngine {
     this.callbacks.onStateChange?.(next)
   }
 
-  /** Initialize keyboard input listeners. */
+  /** Initialize keyboard input listeners. Uses the de-duplicated keyToDirection map. */
   initInput(): void {
     const onKey = (e: KeyboardEvent) => {
       const direction = keyToDirection(e.key)

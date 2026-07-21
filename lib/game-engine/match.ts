@@ -19,8 +19,8 @@ export function shouldEndTimerRound(participants: MultiplayerParticipant[]): boo
 
 /**
  * Computes whether the local player has won an elimination match.
- * The match is won if the number of alive participants is <= 1,
- * and the local player is still alive.
+ * The match is won if the local player is still alive, and there is
+ * at least one opponent in the lobby, and all opponents are dead.
  */
 export function hasLocalPlayerWonElimination(
   participants: MultiplayerParticipant[],
@@ -28,11 +28,27 @@ export function hasLocalPlayerWonElimination(
 ): boolean {
   const localId = localParticipantId ?? 'local'
   const local = participants.find((p) => p.id === localId)
-  if (local && !local.alive) {
+  if (!local || !local.alive) {
     return false
   }
-  const aliveCount = participants.filter((p) => p.alive).length
-  return aliveCount <= 1
+  const opponents = participants.filter((p) => p.id !== localId)
+  if (opponents.length === 0) {
+    return false
+  }
+  return opponents.every((p) => !p.alive)
+}
+
+/**
+ * Checks whether the elimination round should now end after the local player is eliminated.
+ * Returns true if no other participant is still alive (excluding localParticipantId).
+ */
+export function shouldEndEliminationRound(
+  participants: MultiplayerParticipant[],
+  localParticipantId: string | null
+): boolean {
+  const localId = localParticipantId ?? 'local'
+  const opponents = participants.filter((p) => p.id !== localId)
+  return opponents.every((p) => !p.alive)
 }
 
 /**

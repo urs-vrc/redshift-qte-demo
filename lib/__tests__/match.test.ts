@@ -4,6 +4,7 @@ import {
   isPlayerEliminated,
   shouldEndTimerRound,
   hasLocalPlayerWonElimination,
+  shouldEndEliminationRound,
   buildParticipant,
 } from '../game-engine'
 
@@ -89,6 +90,38 @@ describe('hasLocalPlayerWonElimination', () => {
       { id: '2', name: 'Bob', score: 2, alive: false, ready: true, finished: true, sequence: null, progress: 0 },
     ]
     expect(hasLocalPlayerWonElimination(participants, null)).toBe(true)
+  })
+
+  it('returns false if the local player is alive but there are no other participants (solo lobby)', () => {
+    const participants = [
+      { id: 'local', name: 'Alice', score: 1, alive: true, ready: true, finished: false, sequence: null, progress: 0 }
+    ]
+    expect(hasLocalPlayerWonElimination(participants, 'local')).toBe(false)
+  })
+})
+
+describe('shouldEndEliminationRound', () => {
+  it('returns true if the local player is dead/eliminated in a solo lobby (no opponents)', () => {
+    const participants = [
+      { id: 'local', name: 'Alice', score: 1, alive: false, ready: true, finished: true, sequence: null, progress: 0 }
+    ]
+    expect(shouldEndEliminationRound(participants, 'local')).toBe(true)
+  })
+
+  it('returns false if the local player is dead/eliminated but there is another alive participant', () => {
+    const participants = [
+      { id: 'local', name: 'Alice', score: 1, alive: false, ready: true, finished: true, sequence: null, progress: 0 },
+      { id: '2', name: 'Bob', score: 2, alive: true, ready: true, finished: false, sequence: null, progress: 0 }
+    ]
+    expect(shouldEndEliminationRound(participants, 'local')).toBe(false)
+  })
+
+  it('returns true if the local player is dead/eliminated and all other participants are also dead', () => {
+    const participants = [
+      { id: 'local', name: 'Alice', score: 1, alive: false, ready: true, finished: true, sequence: null, progress: 0 },
+      { id: '2', name: 'Bob', score: 2, alive: false, ready: true, finished: true, sequence: null, progress: 0 }
+    ]
+    expect(shouldEndEliminationRound(participants, 'local')).toBe(true)
   })
 })
 
