@@ -105,7 +105,15 @@ export default function MultiplayerGameplay({
     // effect every tick and cause an infinite render loop. The name is captured
     // once at match start via localNameRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [single.state, eliminated, localParticipantId, trackLocal])
+  }, [
+    single.state.phase,
+    single.state.score,
+    single.state.sequence,
+    single.state.progress,
+    eliminated,
+    localParticipantId,
+    trackLocal,
+  ])
 
   // ── Elimination: local player eliminated when their engine ends ──────────
   useEffect(() => {
