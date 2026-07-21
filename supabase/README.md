@@ -1,13 +1,22 @@
-# Supabase Migrations
+# Supabase Backend Infrastructure
 
 The following files are used to perform migrations on the Supabase database for the Redshift QTE Demo as well as necessary infrastructure. These migrations will create the necessary tables and relationships for the multiplayer mode of the game.
+
+## Architecture
+
+The multiplayer system operates on a client-authoritative model supported by Supabase Realtime and minimalist edge functions:
+
+1. **Client-Authoritative Gameplay**: All scoring, round endings, and eliminations are computed locally by the client engine. There is no game state tick or loop on the backend.
+2. **Supabase Realtime Presence**: Consolidates active gameplay state syncing onto a single live presence channel. This completely avoids database writes during high-frequency active play.
+3. **Lobby Heartbeats & Reconciliation**: Clients maintain a lightweight heartbeat in the `lobby_participants` roster table. The database reconciles stale participants, host migration (promoting the earliest joiner deterministically), and empty lobby auto-cleanup.
+4. **pg_cron Requirements**: For both local and cloud environments, `pg_cron` is required and enabled to run the `cleanup_stale_lobbies` background reconciliation task periodically.
 
 ## What's included here?
 
 This includes the full backend infrastructure for the multiplayer mode of the Redshift QTE Demo, including:
  
-- Tables for lobbies and participants
-- Edge functions for telemetry and game state management
+- Tables for lobbies, participants, leaderboard, and telemetry
+- Edge functions for telemetry, lobby creation, match configuration, and leaderboard persistence
 
 ## Deploying to a hosted Supabase project
 

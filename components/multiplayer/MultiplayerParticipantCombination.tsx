@@ -1,9 +1,7 @@
-import React from 'react';
 import type { QteDirection } from '../../lib/game-engine'
+import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows'
 
-import { PixelArrowUp, PixelArrowDown, PixelArrowLeft, PixelArrowRight } from '../PixelArrows';
-
-const ARROW: Record<QteDirection, React.ReactElement> = {
+const ARROW = {
   up: <PixelArrowUp />,
   down: <PixelArrowDown />,
   left: <PixelArrowLeft />,
